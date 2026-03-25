@@ -41,6 +41,18 @@ const UserSchema = new mongoose.Schema(
     availability: {
       type: String,
     },
+    workingHours: {
+      days: {
+        type: [String],
+        enum: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        default: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      },
+      startTime: { type: String, default: '09:00' },  // HH:mm 24h
+      endTime: { type: String, default: '17:00' },
+      slotDuration: { type: Number, default: 120 },    // minutes per slot
+      breakStart: { type: String, default: '13:00' },  // lunch break
+      breakEnd: { type: String, default: '14:00' },
+    },
     location: {
       type: {
         type: String,

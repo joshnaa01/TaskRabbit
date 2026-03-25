@@ -5,10 +5,14 @@ import mongoose from 'mongoose';
 
 export const getServices = async (req, res) => {
   try {
-    const { keyword, category, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
-    
+    const { keyword, category, providerId, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
+
     // Build query
     let query = { isActive: true };
+
+    if (providerId && providerId !== 'undefined') {
+      query.providerId = providerId;
+    }
 
     if (keyword) {
       query.$or = [
@@ -29,7 +33,7 @@ export const getServices = async (req, res) => {
 
     // Pagination
     const skip = (Number(page) - 1) * Number(limit);
-    
+
     const services = await Service.find(query)
       .populate('categoryId', 'name icon')
       .populate('providerId', 'name profilePicture')
@@ -39,12 +43,12 @@ export const getServices = async (req, res) => {
 
     const total = await Service.countDocuments(query);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       count: services.length,
       total,
       pages: Math.ceil(total / limit),
-      data: services 
+      data: services
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -66,7 +70,7 @@ export const updateService = async (req, res) => {
   try {
     let service = await Service.findById(req.params.id);
     if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
-    
+
     // Ensure the provider owns this service (or is admin)
     if (service.providerId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to update this service' });
@@ -83,7 +87,7 @@ export const deleteService = async (req, res) => {
   try {
     let service = await Service.findById(req.params.id);
     if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
-    
+
     if (service.providerId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to delete this service' });
     }
@@ -107,12 +111,12 @@ export const getServicesNearby = async (req, res) => {
 
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
-    
+
     // 2. Radius Constraints (1km - 50km)
     let searchRadiusKm = parseFloat(radius);
     if (!searchRadiusKm || searchRadiusKm < 1) searchRadiusKm = 1;
     if (searchRadiusKm > 50) searchRadiusKm = 50;
-    
+
     const radiusInMeters = searchRadiusKm * 1000;
 
     // 3. Aggregate - Find Providers Near User
@@ -172,15 +176,15 @@ export const getServicesNearby = async (req, res) => {
     let remoteQuery = { serviceType: 'remote', isActive: true };
     if (category) remoteQuery.categoryId = category;
     if (minPrice || maxPrice) {
-       remoteQuery.price = {};
-       if (minPrice) remoteQuery.price.$gte = Number(minPrice);
-       if (maxPrice) remoteQuery.price.$lte = Number(maxPrice);
+      remoteQuery.price = {};
+      if (minPrice) remoteQuery.price.$gte = Number(minPrice);
+      if (maxPrice) remoteQuery.price.$lte = Number(maxPrice);
     }
     if (keyword) {
-       remoteQuery.$or = [
-         { title: { $regex: keyword, $options: 'i' } },
-         { description: { $regex: keyword, $options: 'i' } }
-       ];
+      remoteQuery.$or = [
+        { title: { $regex: keyword, $options: 'i' } },
+        { description: { $regex: keyword, $options: 'i' } }
+      ];
     }
 
     const remoteResults = await Service.find(remoteQuery)
@@ -188,35 +192,35 @@ export const getServicesNearby = async (req, res) => {
       .lean();
 
     const formattedRemote = remoteResults.map(s => ({
-       _id: s._id,
-       title: s.title,
-       price: s.price,
-       description: s.description,
-       images: s.images,
-       serviceType: s.serviceType,
-       distance: null,
-       provider: {
-          id: s.providerId?._id,
-          name: s.providerId?.name,
-          profilePicture: s.providerId?.profilePicture
-       }
+      _id: s._id,
+      title: s.title,
+      price: s.price,
+      description: s.description,
+      images: s.images,
+      serviceType: s.serviceType,
+      distance: null,
+      provider: {
+        id: s.providerId?._id,
+        name: s.providerId?.name,
+        profilePicture: s.providerId?.profilePicture
+      }
     }));
 
     // Merge and de-duplicate (onsite services might also be marked as remote)
     const combined = [...providers, ...formattedRemote];
     const uniqueIds = new Set();
     const deDuplicated = combined.filter(item => {
-       const idStr = item._id.toString();
-       if (uniqueIds.has(idStr)) return false;
-       uniqueIds.add(idStr);
-       return true;
+      const idStr = item._id.toString();
+      if (uniqueIds.has(idStr)) return false;
+      uniqueIds.add(idStr);
+      return true;
     });
 
     const sortedResults = deDuplicated.sort((a, b) => {
-       if (a.distance === null && b.distance === null) return 0;
-       if (a.distance === null) return 1;
-       if (b.distance === null) return -1;
-       return a.distance - b.distance;
+      if (a.distance === null && b.distance === null) return 0;
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
     });
 
     res.status(200).json({

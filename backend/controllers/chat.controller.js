@@ -20,3 +20,23 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getOrCreateConversation = async (req, res) => {
+  try {
+    const { otherUserId } = req.params;
+    let session = await Conversation.findOne({
+      participants: { $all: [req.user.id, otherUserId] }
+    }).populate('participants', 'name profilePicture');
+    
+    if (!session) {
+      session = await Conversation.create({
+        participants: [req.user.id, otherUserId],
+        lastMessage: 'Digital session initiated.'
+      });
+      session = await session.populate('participants', 'name profilePicture');
+    }
+    res.status(200).json({ success: true, data: session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

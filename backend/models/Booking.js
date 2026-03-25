@@ -6,6 +6,10 @@ const BookingSchema = new mongoose.Schema({
   providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['Pending', 'Accepted', 'Rejected', 'In Progress', 'Completed', 'Cancelled', 'Disputed'], default: 'Pending' },
   scheduleDate: { type: Date, required: true },
+  timeSlot: {
+    start: { type: String },  // "09:00"
+    end: { type: String },    // "11:00"
+  },
   details: { type: String },
   address: { type: String, required: true },
   
@@ -28,6 +32,7 @@ const BookingSchema = new mongoose.Schema({
   finalPrice: { type: Number },
   paid: { type: Boolean, default: false },
   khaltiTransactionId: { type: String },
+  rejectionReason: { type: String },
 }, { timestamps: true });
 
 export default mongoose.model('Booking', BookingSchema);

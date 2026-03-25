@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { 
   CreditCard,
@@ -11,13 +11,23 @@ import {
 } from 'lucide-react';
 
 const PaymentsTable = () => {
-    const { data: payments, isLoading, error } = useQuery({
-        queryKey: ['payments'],
-        queryFn: async () => {
-            const res = await api.get('/payments/my');
-            return res.data.data;
-        }
-    });
+    const [payments, setPayments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchPayments = async () => {
+            try {
+                const res = await api.get('/payments/my');
+                setPayments(res.data.data || res.data || []);
+            } catch (err) {
+                setError(err.response?.data?.message || err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPayments();
+    }, []);
 
     const getStatusStyle = (status) => {
         switch (status?.toUpperCase()) {
@@ -28,8 +38,8 @@ const PaymentsTable = () => {
         }
     };
 
-    if (isLoading) return <div className="h-96 bg-slate-100 rounded-[40px] animate-pulse"></div>;
-    if (error) return <div className="p-10 text-red-500 font-bold tracking-tight">Error connecting to payment gateway: {error.message}</div>;
+    if (loading) return <div className="h-96 bg-slate-100 rounded-[40px] animate-pulse"></div>;
+    if (error) return <div className="p-10 text-red-500 font-bold tracking-tight">Error connecting to payment gateway: {error}</div>;
 
     return (
         <div className="flex flex-col gap-10">
@@ -63,7 +73,7 @@ const PaymentsTable = () => {
                                            <div>
                                                <p className="font-black text-slate-900 text-lg mb-1">Booking: #{payment.bookingId?.toString().slice(-6)}</p>
                                                <p className="text-sm text-slate-400 font-bold flex items-center gap-2">
-                                                  ID: <span className="font-black text-slate-500">{payment.khaltiTransactionId.slice(0, 10)}...</span>
+                                                  ID: <span className="font-black text-slate-500">{payment.khaltiTransactionId?.slice(0, 10)}...</span>
                                                </p>
                                            </div>
                                         </div>
@@ -77,10 +87,10 @@ const PaymentsTable = () => {
                                     <td className="px-10 py-10">
                                         <div className="flex flex-col gap-2">
                                             <p className="text-sm font-black text-slate-900 flex items-center gap-2 tracking-tight">
-                                               <Clock className="w-4 h-4 text-blue-600 font-black" /> {new Date(payment.paidAt).toLocaleDateString()}
+                                               <Clock className="w-4 h-4 text-blue-600" /> {new Date(payment.paidAt).toLocaleDateString()}
                                             </p>
                                             <p className="text-sm font-bold text-slate-500 flex items-center gap-2 tracking-tight">
-                                               <CheckCircle2 className="w-4 h-4 text-slate-400 font-black" /> {new Date(payment.paidAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                               <CheckCircle2 className="w-4 h-4 text-slate-400" /> {new Date(payment.paidAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>
                                     </td>

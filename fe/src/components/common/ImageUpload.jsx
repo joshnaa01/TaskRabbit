@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { Camera, X, Loader2, UploadCloud } from 'lucide-react';
 import api from '../../services/api';
 
+import { toast } from 'sonner';
+
 const ImageUpload = ({ onUploadSuccess, currentImage = null, label = "Upload Image", folder = "general" }) => {
   const [preview, setPreview] = useState(currentImage);
   const [isUploading, setIsUploading] = useState(false);
@@ -29,14 +31,16 @@ const ImageUpload = ({ onUploadSuccess, currentImage = null, label = "Upload Ima
       
       onUploadSuccess(data.url);
       setPreview(data.url);
+      toast.success("Image uploaded successfully");
     } catch (err) {
       console.error("Upload failed:", err);
-      alert("Upload failed. Try again.");
+      toast.error("Upload failed. Try again.");
       setPreview(currentImage); // Rollback
     } finally {
       setIsUploading(false);
     }
   };
+
 
   const removeImage = () => {
     setPreview(null);

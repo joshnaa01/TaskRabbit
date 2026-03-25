@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
+
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import ImageUpload from '../../components/common/ImageUpload';
@@ -83,12 +85,16 @@ const Register = () => {
     setLoading(true);
     try {
       await register(formData);
+      toast.success("Account created successfully! Welcome to TaskRabbit.");
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      const msg = err.response?.data?.message || 'Registration failed';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
+
   };
 
   return (
@@ -118,15 +124,18 @@ const Register = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Compact Profile Picture */}
-          <div className="flex justify-center mb-2">
-            <div className="w-full">
-               <ImageUpload 
-                 label="Profile Picture"
-                 onUploadSuccess={(url) => setFormData({...formData, profilePicture: url})}
-               />
+          {/* Compact Profile Picture - Only for Providers during signup */}
+          {formData.role === 'provider' && (
+            <div className="flex justify-center mb-2">
+              <div className="w-full">
+                 <ImageUpload 
+                   label="Profile Picture"
+                   onUploadSuccess={(url) => setFormData({...formData, profilePicture: url})}
+                 />
+              </div>
             </div>
-          </div>
+          )}
+
 
           {/* Inline Geolocation Status for Providers */}
           {formData.role === 'provider' && (

@@ -15,6 +15,8 @@ import {
   Loader2
 } from 'lucide-react';
 
+import { toast } from 'sonner';
+
 const Profile = () => {
     const { user, updateProfile } = useAuth();
     const [formData, setFormData] = useState({
@@ -28,18 +30,20 @@ const Profile = () => {
     const [locationStatus, setLocationStatus] = useState('idle');
 
     const handleSave = async (e) => {
+
         e.preventDefault();
         setIsUpdating(true);
         try {
             await updateProfile(formData);
-            alert("Profile synchronized successfully!");
+            toast.success("Profile synchronized successfully!");
         } catch (err) {
             console.error(err);
-            alert("Sync failed. Check connection.");
+            toast.error("Sync failed. Check connection.");
         } finally {
             setIsUpdating(false);
         }
     };
+
 
     const detectLocation = () => {
         if (!navigator.geolocation) return;

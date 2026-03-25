@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   ChevronDown
 } from 'lucide-react';
+import ServiceCard from '../../components/search/ServiceCard';
 
 const NearbyServices = () => {
   const { location: geoCoords, error: geoError, loading: geoLoading } = useGeolocation();
@@ -123,8 +124,8 @@ const NearbyServices = () => {
       </section>
 
       {/* Main Content */}
-      <section className="py-24 max-w-7xl mx-auto px-8">
-         <div className="flex items-center justify-between mb-16">
+      <section className="py-16 max-w-7xl mx-auto px-8">
+         <div className="flex items-center justify-between mb-10">
             <div>
                <h2 className="text-3xl font-black text-slate-900 tracking-tight">Nearby Results</h2>
                <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-2">{services.length} providers found in your area</p>
@@ -139,84 +140,32 @@ const NearbyServices = () => {
             </div>
          </div>
 
-         {loading ? (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-96 bg-slate-100 rounded-[40px] animate-pulse"></div>
-              ))}
-           </div>
-         ) : services.length > 0 ? (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {services.map((s) => (
-                <Link key={s._id} to={`/service/${s._id}`} className="group bg-white rounded-[40px] border border-slate-100 hover:border-blue-100 transition-all active:scale-[0.98] overflow-hidden hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col">
-                   <div className="w-full h-56 relative overflow-hidden bg-slate-50">
-                      {s.images?.[0] ? (
-                        <img src={s.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-200">
-                           <Zap className="w-16 h-16" />
-                        </div>
-                      )}
-                      
-                      <div className="absolute bottom-6 left-6 flex items-center gap-2">
-                         <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-2 shadow-lg shadow-black/5">
-                            <MapPin className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
-                            <span className="text-xs font-black text-slate-900 uppercase tracking-widest">
-                               {s.distance ? `${s.distance} km away` : 'Remote'}
-                            </span>
-                         </div>
-                      </div>
-                      
-                      {s.serviceType === 'remote' && (
-                         <div className="absolute top-6 right-6 bg-emerald-500/90 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
-                            Global Coverage
-                         </div>
-                      )}
-                   </div>
-
-                   <div className="p-10 flex-1 flex flex-col">
-                      <div className="flex items-center gap-2 mb-6">
-                         <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                         <span className="text-sm font-black text-slate-900">4.9</span>
-                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">• 84 ratings</span>
-                      </div>
-                      
-                      <h3 className="text-2xl font-black text-slate-900 mb-4 group-hover:text-blue-600 transition-colors tracking-tight">{s.title}</h3>
-                      <p className="text-slate-500 font-medium mb-8 line-clamp-2 text-sm leading-relaxed">{s.description}</p>
-                      
-                      <div className="mt-auto pt-8 border-t border-slate-50 flex items-center justify-between w-full">
-                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400 shadow-inner overflow-hidden ring-4 ring-slate-50">
-                               {s.provider?.profilePicture ? (
-                                 <img src={s.provider.profilePicture} alt="" className="w-full h-full object-cover" />
-                               ) : s.provider?.name?.[0]}
-                            </div>
-                            <div>
-                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Verified Pro</p>
-                               <p className="text-sm font-black text-slate-900 truncate max-w-[100px]">{s.provider?.name}</p>
-                            </div>
-                         </div>
-                         <div className="text-right">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Starts From</p>
-                            <p className="text-2xl font-black text-blue-600 tracking-tighter">Rs. {s.price}</p>
-                         </div>
-                      </div>
-                   </div>
-                </Link>
-              ))}
-           </div>
-         ) : (
-           <div className="flex flex-col items-center justify-center py-32 text-center bg-slate-50 rounded-[40px] border border-dashed border-slate-200">
-              <div className="bg-white p-10 rounded-full mb-10 shadow-xl shadow-slate-200/50">
-                 <Search className="w-16 h-16 text-slate-300" />
-              </div>
-              <h3 className="text-3xl font-black text-slate-900 mb-4">Quiet around here?</h3>
-              <p className="text-slate-500 font-medium mb-10 max-w-sm leading-relaxed">No services were found within {radius}km of your location. Try expanding your search radius!</p>
-              <Button size="lg" className="rounded-[24px] px-12" onClick={() => setRadius(50)}>
-                 Look further (50km)
-              </Button>
-           </div>
-         )}
+         <div className="pb-12">
+            {loading ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-80 bg-slate-100 rounded-3xl animate-pulse"></div>
+                ))}
+             </div>
+           ) : services.length > 0 ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {services.map((s) => (
+                  <ServiceCard key={s._id} service={s} />
+                ))}
+             </div>
+           ) : (
+             <div className="flex flex-col items-center justify-center py-20 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <div className="bg-white p-8 rounded-full mb-8 shadow-xl shadow-slate-200/50">
+                   <Search className="w-12 h-12 text-slate-300" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">No results yet</h3>
+                <p className="text-slate-500 font-medium mb-8 max-w-sm leading-relaxed text-sm">No services were found within {radius}km. Try expanding your radius!</p>
+                <Button size="lg" className="rounded-2xl px-12" onClick={() => setRadius(50)}>
+                   Look further (50km)
+                </Button>
+             </div>
+           )}
+         </div>
       </section>
     </div>
   );

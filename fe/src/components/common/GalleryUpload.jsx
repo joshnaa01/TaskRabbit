@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Image as ImageIcon, X, Loader2, UploadCloud, Plus } from 'lucide-react';
 import api from '../../services/api';
 
+import { toast } from 'sonner';
+
 const GalleryUpload = ({ onUpdate, currentGallery = [], label = "Image Gallery", limit = 6 }) => {
   const [images, setImages] = useState(currentGallery);
   const [isUploading, setIsUploading] = useState(false);
@@ -11,7 +13,7 @@ const GalleryUpload = ({ onUpdate, currentGallery = [], label = "Image Gallery",
     if (!files || files.length === 0) return;
 
     if (images.length + files.length > limit) {
-      alert(`You can only upload up to ${limit} images.`);
+      toast.error(`You can only upload up to ${limit} images.`);
       return;
     }
 
@@ -27,13 +29,15 @@ const GalleryUpload = ({ onUpdate, currentGallery = [], label = "Image Gallery",
       const newImages = [...images, ...data.data];
       setImages(newImages);
       onUpdate(newImages);
+      toast.success("Gallery updated successfully");
     } catch (err) {
       console.error("Gallery upload failed:", err);
-      alert("Upload failed. Try again.");
+      toast.error("Upload failed. Try again.");
     } finally {
       setIsUploading(false);
     }
   };
+
 
   const removeImage = (index) => {
     const updated = images.filter((_, i) => i !== index);

@@ -1,5 +1,7 @@
-import express from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import http from 'http';
@@ -9,12 +11,11 @@ import connectDB from './config/db.js';
 // Models for Socket.io
 import Conversation from './models/Conversation.js';
 import Message from './models/Message.js';
-
-// Load env vars
-dotenv.config();
+import Notification from './models/Notification.js';
 
 // Connect to database
-connectDB();
+await connectDB();
+
 
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +42,9 @@ import paymentRoutes from './routes/payment.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import slotRoutes from './routes/slot.routes.js';
 
 // Mount routes
 app.use('/api/auth', authRoutes);
@@ -51,6 +55,9 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/slots', slotRoutes);
 
 // Base route
 app.get('/', (req, res) => res.send('TaskRabbit Clone API is running...'));
@@ -61,8 +68,16 @@ io.on('connection', (socket) => {
 
   // Join a specific conversation room
   socket.on('joinChat', (conversationId) => {
+    // Leave all rooms (except the default one which is the socket ID)
+    const currentRooms = Array.from(socket.rooms);
+    currentRooms.forEach(room => {
+      if (room !== socket.id) {
+        socket.leave(room);
+      }
+    });
+    
     socket.join(conversationId);
-    console.log(`User joined room: ${conversationId}`);
+    console.log(`User ${socket.id} switched to room: ${conversationId}`);
   });
 
   // Handle sending message
@@ -72,7 +87,7 @@ io.on('connection', (socket) => {
 
       // 1. Save to DB
       const message = await Message.create({ conversationId, senderId, content, fileUrl });
-      
+
       // Update Conversation's lastMessage
       let updatedLastMsg = fileUrl ? 'Sent a file' : content;
       await Conversation.findByIdAndUpdate(conversationId, {
@@ -80,7 +95,26 @@ io.on('connection', (socket) => {
         updatedAt: Date.now()
       });
 
-      // 2. Emit to room
+      // 2. Create Notification for the other participant
+      const session = await Conversation.findById(conversationId);
+      if (session) {
+        const recipientId = session.participants.find(p => p.toString() !== senderId.toString());
+        if (recipientId) {
+          await Notification.create({
+            recipient: recipientId,
+            sender: senderId,
+            type: 'message',
+            title: `New message from ${data.senderName || 'Participant'}`,
+            message: content,
+            isRead: false
+          });
+          
+          // Optionally emit notification count update via socket to recipient if online
+          // io.to(recipientId.toString()).emit('newNotification', { type: 'message' });
+        }
+      }
+
+      // 3. Emit to room
       io.to(conversationId).emit('newMessage', message);
     } catch (error) {
       console.error('Socket message error:', error);
@@ -89,6 +123,16 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
+  });
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error('SERVER_ERROR:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
