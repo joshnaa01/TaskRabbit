@@ -109,6 +109,12 @@ const BookingsTable = () => {
                     await api.put(`/bookings/${bookingId}/status`, { status: 'Cancelled' });
                     toast.warning('Booking cancelled.');
                     break;
+                case 'dispute':
+                    const disputeReason = prompt('Enter a reason for the dispute. This will be reviewed by an administrator:');
+                    if (!disputeReason) return;
+                    await api.post(`/bookings/${bookingId}/dispute`, { reason: disputeReason });
+                    toast.success('Dispute raised successfully. Admin has been notified.');
+                    break;
                 default: break;
             }
             await fetchBookings(); // Refresh list after any action
@@ -260,6 +266,18 @@ const BookingsTable = () => {
                                               Cancel
                                             </button>
                                           )}
+
+                                           {/* Raise Dispute button */}
+                                           {['Accepted', 'In Progress', 'Completed'].includes(booking.status) && !booking.paid && !booking.isDisputed && (
+                                                <button
+                                                  onClick={() => handleAction('dispute', booking._id)}
+                                                  disabled={actionLoading}
+                                                  className="p-3.5 rounded-2xl bg-red-50/50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                                  title="Raise Dispute"
+                                                >
+                                                   <AlertCircle className="w-4 h-4" />
+                                                </button>
+                                           )}
                                        </div>
                                     </td>
                                 </tr>

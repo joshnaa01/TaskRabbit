@@ -9,7 +9,8 @@ import {
   MoreVertical,
   Trash2,
   RefreshCcw,
-  Check
+  Check,
+  Ban
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -42,6 +43,16 @@ const AdminUsers = () => {
             fetchUsers();
         } catch (err) {
             toast.error('Failed to update verification status');
+        }
+    };
+
+    const handleSuspendStatus = async (userId, currentStatus) => {
+        try {
+            await api.put(`/admin/users/${userId}`, { status: currentStatus === 'suspended' ? 'active' : 'suspended' });
+            toast.success(`User suspension status updated`);
+            fetchUsers();
+        } catch (err) {
+            toast.error('Failed to update suspension status');
         }
     };
 
@@ -140,6 +151,13 @@ const AdminUsers = () => {
                                     </td>
                                     <td className="px-10 py-8 text-right">
                                         <div className="flex justify-end gap-3 items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                              onClick={() => handleSuspendStatus(user._id, user.status)}
+                                              className={`p-3.5 rounded-2xl border transition-all shadow-sm ${user.status === 'suspended' ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 'bg-white border-slate-100 text-slate-400 hover:bg-amber-50 hover:text-amber-500 hover:border-amber-100'}`} 
+                                              title={user.status === 'suspended' ? 'Restore Account' : 'Suspend Account'}
+                                            >
+                                                <Ban className="w-4 h-4" />
+                                            </button>
                                             <button 
                                               onClick={() => handleDeleteUser(user._id)}
                                               className="p-3.5 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all shadow-sm" 

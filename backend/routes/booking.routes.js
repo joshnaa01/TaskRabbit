@@ -6,7 +6,8 @@ import {
   completeBooking,
   payBooking,
   submitDeliverables,
-  requestRevision
+  requestRevision,
+  raiseDispute
 } from '../controllers/booking.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
@@ -22,5 +23,6 @@ router.patch('/:id/complete', protect, authorize('provider'), completeBooking);
 router.post('/:id/pay', protect, authorize('client'), payBooking);
 router.patch('/:id/deliverables', protect, authorize('provider'), submitDeliverables);
 router.post('/:id/revision', protect, authorize('client'), requestRevision);
+router.post('/:id/dispute', protect, authorize('client', 'provider'), raiseDispute);
 
 export default router;

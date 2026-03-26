@@ -106,6 +106,7 @@ io.on('connection', (socket) => {
             type: 'message',
             title: `New message from ${data.senderName || 'Participant'}`,
             message: content,
+            conversationId: conversationId,
             isRead: false
           });
           

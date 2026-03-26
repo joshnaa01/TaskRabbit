@@ -25,6 +25,7 @@ import Chat from './pages/dashboard/Chat';
 import AdminCategories from './pages/dashboard/AdminCategories';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminUsers from './pages/dashboard/AdminUsers';
+import AdminDisputes from './pages/dashboard/AdminDisputes';
 
 // Role-based Route Protection
 const ProtectedRoute = ({ children }) => {
@@ -97,6 +98,7 @@ function App() {
             {/* ADMIN ONLY */}
             <Route path="/dashboard/categories" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminCategories /></DashboardLayout></RoleRoute>} />
             <Route path="/dashboard/users" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminUsers /></DashboardLayout></RoleRoute>} />
+            <Route path="/dashboard/disputes" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminDisputes /></DashboardLayout></RoleRoute>} />
             <Route path="/admin" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminDashboard /></DashboardLayout></RoleRoute>} />
 
             {/* 404 */}

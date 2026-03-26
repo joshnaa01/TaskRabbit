@@ -20,6 +20,7 @@ const NotificationSchema = new mongoose.Schema({
   title: { type: String, required: true },
   message: { type: String, required: true },
   bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' },
+  conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation' },
   isRead: { type: Boolean, default: false }
 }, { timestamps: true });
 

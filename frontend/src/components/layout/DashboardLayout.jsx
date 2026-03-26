@@ -20,7 +20,8 @@ import {
   Zap,
   Tag,
   Users,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import Header from './Header';
@@ -85,6 +86,7 @@ const DashboardLayout = ({ children }) => {
       { label: 'Identity Directory', icon: Users, path: '/dashboard/users' },
       { label: 'Service Domains', icon: Tag, path: '/dashboard/categories' },
       { label: 'Secure Payments', icon: CreditCard, path: '/dashboard/payments' },
+      { label: 'Dispute Console', icon: AlertCircle, path: '/dashboard/disputes' },
     ];
 
     switch (user?.role) {

@@ -161,6 +161,10 @@ const AdminDashboard = () => {
                 <TrendingUp className="w-5 h-5 text-amber-400" />
                 <span className="font-bold text-sm tracking-wide">Run Financial Reports</span>
              </Link>
+             <Link to="/dashboard/disputes" className="w-full bg-white/10 hover:bg-white/20 border border-white/5 p-5 rounded-2xl flex items-center gap-4 transition-all block">
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <span className="font-bold text-sm tracking-wide">Dispute Resolution</span>
+             </Link>
           </div>
         </div>
 

@@ -33,6 +33,14 @@ const BookingSchema = new mongoose.Schema({
   paid: { type: Boolean, default: false },
   khaltiTransactionId: { type: String },
   rejectionReason: { type: String },
+  isDisputed: { type: Boolean, default: false },
+  dispute: {
+    reason: { type: String },
+    status: { type: String, enum: ['Open', 'Resolved', 'Closed'], default: 'Open' },
+    raisedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    adminVerdict: { type: String },
+    createdAt: { type: Date }
+  }
 }, { timestamps: true });
 
 export default mongoose.model('Booking', BookingSchema);

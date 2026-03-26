@@ -43,8 +43,17 @@ const Chat = () => {
                 // Handle '?to=userId' in URL
                 const params = new URLSearchParams(location.search);
                 const toUserId = params.get('to');
+                const conversationId = params.get('conversationId');
                 
-                if (toUserId) {
+                if (conversationId) {
+                    const existing = allConvs.find(c => c._id === conversationId);
+                    if (existing) {
+                        setSelectedConv(existing);
+                    } else {
+                        // If not in the list, maybe it exists but wasn't fetched?
+                        // Or just let it be. Usually it should be in allConvs if user is a participant.
+                    }
+                } else if (toUserId) {
                     // Try to find if it already exists
                     const existing = allConvs.find(c => c.participants.some(p => p._id === toUserId));
                     if (existing) {

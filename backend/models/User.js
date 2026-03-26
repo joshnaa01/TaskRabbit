@@ -28,6 +28,15 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ['active', 'suspended', 'deactivated'],
+      default: 'active',
+    },
+    isSuspicious: {
+      type: Boolean,
+      default: false,
+    },
     profilePicture: {
       type: String,
       default: 'default.jpg',

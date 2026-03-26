@@ -1,9 +1,11 @@
 import React from 'react';
 import { X, Bell, CheckCircle2, MessageSquare, Info, Zap, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getNameInitials } from '../../utils/getNameInitials';
 import api from '../../services/api';
 
 const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefresh }) => {
+    const navigate = useNavigate();
     if (!isOpen) return null;
 
     const handleSingleMarkRead = async (id) => {
@@ -12,6 +14,30 @@ const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefre
             if (onRefresh) onRefresh();
         } catch (err) {
             console.error(err);
+        }
+    };
+    
+    const handleNotificationClick = (n) => {
+        // Mark as read when clicking
+        if (!n.isRead) {
+            handleSingleMarkRead(n._id);
+        }
+        
+        // Modal close
+        onClose();
+
+        // Specific navigation logic
+        if (n.type === 'message' && n.conversationId) {
+            navigate(`/dashboard/messages?conversationId=${n.conversationId}`);
+        } else if (n.type === 'message' && n.sender?._id) {
+            navigate(`/dashboard/messages?to=${n.sender._id}`);
+        } else if (n.bookingId) {
+            // Navigate to specific booking in the table (assuming it's filtered or focused)
+            // For now just general bookings table
+            navigate('/dashboard/bookings');
+        } else {
+            // General dashboard navigation
+            navigate('/dashboard');
         }
     };
 
@@ -43,11 +69,18 @@ const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefre
                     {notifications.length > 0 ? (
                         <div className="space-y-3">
                             {notifications.map((n) => (
-                                <div key={n._id} className={`group p-5 rounded-[32px] border transition-all relative ${n.isRead ? 'bg-white border-slate-50' : 'bg-blue-50/30 border-blue-100/50'}`}>
+                                <div 
+                                    key={n._id} 
+                                    onClick={() => handleNotificationClick(n)}
+                                    className={`group p-5 rounded-[32px] border transition-all relative cursor-pointer active:scale-[0.98] ${n.isRead ? 'bg-white border-slate-50' : 'bg-blue-50/30 border-blue-100/50 hover:bg-white hover:shadow-lg hover:shadow-blue-500/5'}`}
+                                >
 
                                     {!n.isRead && (
                                         <button
-                                            onClick={() => handleSingleMarkRead(n._id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSingleMarkRead(n._id);
+                                            }}
                                             className="absolute top-4 right-4 p-2 bg-white rounded-xl shadow-lg shadow-blue-500/5 border border-blue-100/50 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-500 hover:text-white"
                                             title="Mark as Read"
                                         >
