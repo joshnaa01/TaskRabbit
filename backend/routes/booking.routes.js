@@ -7,7 +7,8 @@ import {
   payBooking,
   submitDeliverables,
   requestRevision,
-  raiseDispute
+  raiseDispute,
+  submitComplaint
 } from '../controllers/booking.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
@@ -20,9 +21,11 @@ router.route('/')
 router.get('/my', protect, getBookings);
 router.route('/:id/status').put(protect, authorize('provider', 'admin', 'client'), updateBookingStatus);
 router.patch('/:id/complete', protect, authorize('provider'), completeBooking);
-router.post('/:id/pay', protect, authorize('client'), payBooking);
+// Deprecated old payment route — use /api/payments
+// router.post('/:id/pay', protect, authorize('client'), payBooking);
 router.patch('/:id/deliverables', protect, authorize('provider'), submitDeliverables);
 router.post('/:id/revision', protect, authorize('client'), requestRevision);
 router.post('/:id/dispute', protect, authorize('client', 'provider'), raiseDispute);
+router.post('/:id/complaint', protect, authorize('client'), submitComplaint);
 
 export default router;

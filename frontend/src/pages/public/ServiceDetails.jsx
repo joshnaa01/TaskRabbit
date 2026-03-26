@@ -19,7 +19,8 @@ import {
    Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { initiateKhaltiPayment } from '../../services/khalti';
+import StripePaymentModal from '../../components/payment/StripePaymentModal';
+import InlineCalendar from '../../components/common/InlineCalendar';
 const ServiceDetails = () => {
    const { id } = useParams();
    const navigate = useNavigate();
@@ -37,6 +38,7 @@ const ServiceDetails = () => {
    const [slots, setSlots] = useState([]);
    const [selectedSlot, setSelectedSlot] = useState(null);
    const [slotsLoading, setSlotsLoading] = useState(false);
+   const [paymentModal, setPaymentModal] = useState({ open: false, booking: null });
 
    useEffect(() => {
       const fetchData = async () => {
@@ -82,18 +84,11 @@ const ServiceDetails = () => {
       if (service.categoryId?.name?.toLowerCase().includes('tutoring')) {
          return toast.warning("Escrow booking is currently optimized for one-off tasks. Multi-day services are disabled.");
       }
+      
       setSubmitting(true);
       try {
-         // 1. Initiate Khalti simulation for demo
-         toast.info("Connecting to Khalti Secure Gateway...");
-         const paymentResult = await initiateKhaltiPayment({
-            amount: service.price * 100, // NPR to Paisa
-            purchase_id: service._id,
-            purchase_name: service.title
-         });
-
-         // 2. Submit booking after payment success
-         await api.post('/bookings', {
+         // 1. Create the booking record first (Pending status)
+         const res = await api.post('/bookings', {
             serviceId: service._id,
             scheduleDate: bookingData.scheduleDate,
             timeSlot: {
@@ -105,10 +100,15 @@ const ServiceDetails = () => {
                description: bookingData.requirements,
                files: bookingData.files
             },
-            paymentId: paymentResult.transaction_id
+            basePrice: service.price
          });
-         toast.success("Payment Secured! Booking request transmitted.");
-         navigate('/dashboard/bookings');
+
+         // 2. Open Stripe Payment Modal for this booking
+         setPaymentModal({
+            open: true,
+            booking: res.data.data
+         });
+
       } catch (err) {
          toast.error(err.response?.data?.message || "Transmission failed.");
       } finally {
@@ -252,15 +252,21 @@ const ServiceDetails = () => {
                      <form onSubmit={handleBooking} className="space-y-8">
                         <div className="space-y-6">
                            <div className="space-y-3">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Engagement Date</label>
-                              <input
-                                 type="date"
-                                 required
-                                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm font-bold text-white outline-none focus:bg-white/10 focus:border-blue-400 transition-all"
-                                 value={bookingData.scheduleDate}
-                                 onChange={(e) => setBookingData({ ...bookingData, scheduleDate: e.target.value })}
-                              />
-                           </div>
+                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Select Date</label>
+                               <InlineCalendar
+                                  darkMode
+                                  value={bookingData.scheduleDate}
+                                  onChange={(date) => setBookingData({ ...bookingData, scheduleDate: date })}
+                               />
+                               {bookingData.scheduleDate && (
+                                  <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                                     <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                                     <span className="text-[10px] font-black text-blue-300 uppercase tracking-widest">
+                                        {new Date(bookingData.scheduleDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                     </span>
+                                  </div>
+                               )}
+                            </div>
 
                            <div className="space-y-4">
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Available Windows</label>
@@ -346,6 +352,21 @@ const ServiceDetails = () => {
                </div>
             </div>
          </div>
+         <StripePaymentModal
+            isOpen={paymentModal.open}
+            onClose={() => {
+               setPaymentModal({ open: false, booking: null });
+               navigate('/dashboard/bookings');
+            }}
+            onSuccess={() => {
+               setPaymentModal({ open: false, booking: null });
+               toast.success("Payment Secured! Booking request transmitted.");
+               navigate('/dashboard/bookings');
+            }}
+            bookingId={paymentModal.booking?._id}
+            amount={service.price}
+            serviceName={service.title}
+         />
       </div>
    );
 };

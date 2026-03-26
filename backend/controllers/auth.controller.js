@@ -14,7 +14,7 @@ export const register = async (req, res) => {
     return res.status(400).json({ success: false, errors: errors.array() });
   }
 
-  const { name, email, password, role, lat, lng, profilePicture } = req.body;
+  const { name, email, password, role, lat, lng, profilePicture, citizenshipDocument, workDocument } = req.body;
 
   try {
     let user = await User.findOne({ email });
@@ -45,7 +45,10 @@ export const register = async (req, res) => {
       password,
       role: finalRole,
       location,
-      profilePicture
+      profilePicture,
+      citizenshipDocument,
+      workDocument,
+      isApproved: finalRole === 'provider' ? false : true
     });
 
     const token = generateToken(user._id);
@@ -84,6 +87,10 @@ export const login = async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    if (user.role === 'provider' && !user.isApproved) {
+      return res.status(401).json({ success: false, message: 'Your account is pending admin approval' });
     }
 
     const token = generateToken(user._id);

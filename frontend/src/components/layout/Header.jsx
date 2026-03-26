@@ -77,8 +77,8 @@ const Header = () => {
 
                     {/* Navigation Links */}
                     <nav className="hidden lg:flex items-center gap-8 mx-12">
-                        <Link to="/search" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-blue-600 transition-colors">Local Experts</Link>
-                        <Link to="/search" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-blue-600 transition-colors">Catalog</Link>
+                        <Link to="/contact" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-blue-600 transition-colors">Contact Us</Link>
+                        <Link to="/search" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-blue-600 transition-colors">Services</Link>
                         <Link to="/how-it-works" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-blue-600 transition-colors">Guide</Link>
                     </nav>
 

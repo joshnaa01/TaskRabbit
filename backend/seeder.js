@@ -159,6 +159,26 @@ const importData = async () => {
       isVerified: true
     });
     console.log('✅ Admin User created!');
+    
+    // 7. Seed Reviews
+    const Review = (await import('./models/Review.js')).default;
+    await Review.deleteMany();
+    const allServices = await Service.find();
+    const allClients = await User.find({ role: 'client' });
+    
+    const reviewsData = [];
+    allServices.forEach((s, idx) => {
+        reviewsData.push({
+            serviceId: s._id,
+            clientId: allClients[idx % allClients.length]._id,
+            providerId: s.providerId,
+            rating: 4 + (idx % 2),
+            comment: idx % 2 === 0 ? "Exemplary work quality and punctual delivery. Highly recommended!" : "Strategic and precise execution. Will engage again for future projects.",
+            createdAt: new Date(Date.now() - (idx * 86400000))
+        });
+    });
+    await Review.insertMany(reviewsData);
+    console.log('✅ Reviews imported!');
 
     console.log('✨ ALL SEED DATA IMPORTED SUCCESSFULLY! ✨');
     process.exit();

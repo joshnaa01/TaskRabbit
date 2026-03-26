@@ -14,6 +14,7 @@ import ServiceDetails from './pages/public/ServiceDetails';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import HowItWorks from './pages/public/HowItWorks';
+import Contact from './pages/public/Contact';
 
 // Dashboard Pages
 import DashboardOverview from './pages/dashboard/DashboardOverview';
@@ -69,9 +70,11 @@ function App() {
             <Route path="/how-it-works" element={<PublicLayout noContainer><HowItWorks /></PublicLayout>} />
             <Route path="/nearby" element={<Navigate to="/search" replace />} />
 
+            <Route path="/contact" element={<PublicLayout noContainer><Contact /></PublicLayout>} />
+
             {/* GUEST ONLY */}
-            <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
-            <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+            <Route path="/login" element={<PublicLayout noContainer><GuestRoute><Login /></GuestRoute></PublicLayout>} />
+            <Route path="/register" element={<PublicLayout noContainer><GuestRoute><Register /></GuestRoute></PublicLayout>} />
 
             {/* SHARED DASHBOARD - ROLE SENSITIVE LAYOUT */}
             <Route path="/dashboard" element={<ProtectedRoute><DynamicLayout><DashboardOverview /></DynamicLayout></ProtectedRoute>} />

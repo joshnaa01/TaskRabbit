@@ -24,12 +24,15 @@ import {
   MapPin,
   RefreshCcw,
   Star,
-  Heart
+  Heart,
+  Flag
 } from 'lucide-react';
 
-import { initiateKhaltiPayment } from '../../services/khalti';
+import StripePaymentModal from '../../components/payment/StripePaymentModal';
 import { toast } from 'sonner';
 
+
+const STATUS_PRIORITY = { 'Pending': 0, 'Accepted': 1, 'Completed': 2, 'In Progress': 3, 'Rejected': 4, 'Cancelled': 5 };
 
 const BookingsTable = () => {
     const { user } = useAuth();
@@ -39,7 +42,9 @@ const BookingsTable = () => {
     const [expandedBooking, setExpandedBooking] = useState(null);
     const [submissionData, setSubmissionData] = useState({ message: '', files: [] });
     const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
-    const [actionLoading, setActionLoading] = useState(null); // tracks which booking ID is being acted on
+    const [actionLoading, setActionLoading] = useState(null);
+    const [paymentModal, setPaymentModal] = useState({ open: false, bookingId: null, amount: 0, title: '' });
+    const [activeFilter, setActiveFilter] = useState('all');
 
     const fetchBookings = useCallback(async () => {
         try {
@@ -55,6 +60,21 @@ const BookingsTable = () => {
     }, []);
 
     useEffect(() => { fetchBookings(); }, [fetchBookings]);
+
+    // Sort: Pending first, then by priority, then by date
+    const sortedBookings = [...bookings]
+        .filter(b => activeFilter === 'all' || b.status === activeFilter)
+        .sort((a, b) => {
+            const pa = STATUS_PRIORITY[a.status] ?? 99;
+            const pb = STATUS_PRIORITY[b.status] ?? 99;
+            if (pa !== pb) return pa - pb;
+            // Within same status, most recent first
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+    const pendingCount = bookings.filter(b => b.status === 'Pending').length;
+    const acceptedCount = bookings.filter(b => b.status === 'Accepted').length;
+    const completedCount = bookings.filter(b => b.status === 'Completed').length;
 
     const handleAction = async (action, bookingId, extraData = {}) => {
         setActionLoading(bookingId);
@@ -89,14 +109,13 @@ const BookingsTable = () => {
                     toast.success('Revision request sent.');
                     break;
                 case 'pay':
-                    const result = await initiateKhaltiPayment({
-                        amount: (extraData.price || 0) * 100,
-                        purchase_id: bookingId,
-                        purchase_name: `Payment for ${extraData.title || 'Service'}`
+                    setPaymentModal({
+                      open: true,
+                      bookingId: bookingId,
+                      amount: extraData.price || 0,
+                      title: extraData.title || 'Service'
                     });
-                    await api.post(`/bookings/${bookingId}/pay`, { transactionId: result.transaction_id });
-                    toast.success('Payment verified via Khalti!');
-                    break;
+                    return; // Don't refresh yet — payment modal handles it
                 case 'submitReview':
                     if (!extraData.comment) throw new Error('Feedback comment required');
                     await api.post('/reviews', { ...extraData, bookingId });
@@ -114,6 +133,12 @@ const BookingsTable = () => {
                     if (!disputeReason) return;
                     await api.post(`/bookings/${bookingId}/dispute`, { reason: disputeReason });
                     toast.success('Dispute raised successfully. Admin has been notified.');
+                    break;
+                case 'complaint':
+                    const complaintText = prompt('Describe your complaint about the work. This will be sent to admin:');
+                    if (!complaintText) return;
+                    await api.post(`/bookings/${bookingId}/complaint`, { complaint: complaintText });
+                    toast.success('Complaint submitted to admin successfully.');
                     break;
                 default: break;
             }
@@ -154,7 +179,8 @@ const BookingsTable = () => {
     );
 
     return (
-        <div className="flex flex-col gap-10">
+        <>
+        <div className="flex flex-col gap-8">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight">Manage Task Operations</h1>
@@ -163,6 +189,37 @@ const BookingsTable = () => {
                 <button onClick={fetchBookings} className="p-3 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 text-slate-400 hover:text-blue-600 transition-all" title="Refresh">
                     <RefreshCcw className="w-5 h-5" />
                 </button>
+            </div>
+
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+                {[
+                    { key: 'all', label: 'All', count: bookings.length },
+                    { key: 'Pending', label: 'Pending', count: pendingCount, color: 'amber' },
+                    { key: 'Accepted', label: 'Active', count: acceptedCount, color: 'blue' },
+                    { key: 'Completed', label: 'Completed', count: completedCount, color: 'emerald' },
+                ].map(tab => (
+                    <button
+                        key={tab.key}
+                        onClick={() => setActiveFilter(tab.key)}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                            activeFilter === tab.key
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/10'
+                                : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
+                        }`}
+                    >
+                        {tab.label}
+                        <span className={`min-w-[20px] h-5 flex items-center justify-center rounded-lg text-[9px] font-black ${
+                            activeFilter === tab.key
+                                ? 'bg-white/20 text-white'
+                                : tab.key === 'Pending' && tab.count > 0
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-slate-100 text-slate-400'
+                        }`}>
+                            {tab.count}
+                        </span>
+                    </button>
+                ))}
             </div>
 
             <div className="bg-white rounded-[44px] shadow-2xl shadow-blue-900/5 border border-slate-50 overflow-hidden">
@@ -176,7 +233,7 @@ const BookingsTable = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100/50">
-                            {bookings.length > 0 ? bookings.map((booking) => (
+                            {sortedBookings.length > 0 ? sortedBookings.map((booking) => (
                                 <React.Fragment key={booking._id}>
                                 <tr className="group hover:bg-slate-50/30 transition-all">
                                     <td className="px-10 py-10">
@@ -276,6 +333,18 @@ const BookingsTable = () => {
                                                   title="Raise Dispute"
                                                 >
                                                    <AlertCircle className="w-4 h-4" />
+                                                </button>
+                                           )}
+
+                                           {/* Complaint button - Client only */}
+                                           {user?.role === 'client' && ['Completed', 'Accepted'].includes(booking.status) && (
+                                                <button
+                                                  onClick={() => handleAction('complaint', booking._id)}
+                                                  disabled={actionLoading}
+                                                  className="p-3.5 rounded-2xl bg-amber-50/50 text-amber-500 hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                                                  title="Submit Complaint"
+                                                >
+                                                   <Flag className="w-4 h-4" />
                                                 </button>
                                            )}
                                        </div>
@@ -405,6 +474,19 @@ const BookingsTable = () => {
                 </div>
             </div>
         </div>
+
+        <StripePaymentModal
+          isOpen={paymentModal.open}
+          onClose={() => setPaymentModal({ open: false, bookingId: null, amount: 0, title: '' })}
+          bookingId={paymentModal.bookingId}
+          amount={paymentModal.amount}
+          serviceName={paymentModal.title}
+          onSuccess={() => {
+            setPaymentModal({ open: false, bookingId: null, amount: 0, title: '' });
+            fetchBookings();
+          }}
+        />
+        </>
     );
 };
 

@@ -12,7 +12,18 @@ import {
   Zap,
   ArrowRight,
   Filter,
-  MapPin
+  MapPin,
+  LayoutGrid,
+  Droplets,
+  Hammer,
+  Zap as Electricity,
+  Sprout,
+  Wind,
+  Scissors,
+  BookOpen,
+  Monitor,
+  Truck,
+  Sparkles
 } from 'lucide-react';
 import ServiceCard from '../../components/search/ServiceCard';
 
@@ -20,6 +31,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroSearch, setHeroSearch] = useState('');
 
@@ -41,9 +53,33 @@ const Home = () => {
     }
   }, [searchParams]);
 
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories');
+      setCategories(res.data.data || res.data || []);
+    } catch (err) { console.error(err); }
+  };
+
   useEffect(() => {
     fetchServices();
+    fetchCategories();
   }, [fetchServices]);
+
+  const getCategoryIcon = (name) => {
+    switch (name) {
+      case 'Cleaning': return <Sparkles className="w-6 h-6" />;
+      case 'Plumbing': return <Droplets className="w-6 h-6" />;
+      case 'Electrical': return <Electricity className="w-6 h-6" />;
+      case 'Gardening': return <Sprout className="w-6 h-6" />;
+      case 'Carpentry': return <Hammer className="w-6 h-6" />;
+      case 'AC & Cooling': return <Wind className="w-6 h-6" />;
+      case 'Beauty & Salon': return <Scissors className="w-6 h-6" />;
+      case 'Tutoring': return <BookOpen className="w-6 h-6" />;
+      case 'Web Development': return <Monitor className="w-6 h-6" />;
+      case 'Moving & Delivery': return <Truck className="w-6 h-6" />;
+      default: return <LayoutGrid className="w-6 h-6" />;
+    }
+  };
 
   return (
     <div className="flex flex-col bg-white overflow-hidden">
@@ -112,20 +148,48 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Services Hub */}
-      <section className="py-16 max-w-7xl mx-auto px-8 w-full">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-8">
+      {/* Service Catalog Section */}
+      <section className="py-24 max-w-7xl mx-auto px-8 w-full border-b border-slate-50">
+        <div className="flex items-center justify-between mb-12">
           <div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Recommended for you</h2>
-            <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mt-3">High-rated experts in your vicinity</p>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Service Catalog</h2>
+            <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mt-3">Browse by specialization</p>
+          </div>
+          <Link to="/search">
+            <Button variant="ghost" className="rounded-2xl font-black text-[10px] uppercase tracking-widest px-8 gap-2 h-12 group hover:bg-slate-50">
+               Full Directory <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          {categories.slice(0, 10).map((cat) => (
+            <Link 
+              key={cat._id} 
+              to={`/search?category=${cat._id}`}
+              className="group bg-white p-8 rounded-[32px] border border-slate-100/50 flex flex-col items-center text-center transition-all hover:bg-blue-600 hover:border-blue-600 hover:shadow-2xl hover:shadow-blue-600/30 active:scale-95"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6 group-hover:bg-white/20 group-hover:text-white transition-all shadow-sm">
+                {getCategoryIcon(cat.name)}
+              </div>
+              <h4 className="text-sm font-black text-slate-900 group-hover:text-white tracking-tight">{cat.name}</h4>
+              <p className="text-[10px] font-bold text-slate-400 group-hover:text-blue-100/70 mt-2 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">Explore experts</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Recommended/Local Experts Section */}
+      <section className="py-24 max-w-7xl mx-auto px-8 w-full">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+          <div>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Elite Local Experts</h2>
+            <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mt-3">Premium Taskers in your immediate vicinity</p>
           </div>
           <div className="flex gap-4">
-            <Button variant="outline" className="rounded-2xl border-slate-200 font-black text-[10px] uppercase tracking-widest px-8 gap-2 h-12">
-              <Filter className="w-4 h-4" /> Refinement
-            </Button>
             <Link to="/search">
-              <Button variant="ghost" className="rounded-2xl font-black text-[10px] uppercase tracking-widest px-8 gap-2 h-12 group">
-                Explore All <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+              <Button variant="outline" className="rounded-2xl border-slate-200 font-black text-[10px] uppercase tracking-widest px-8 gap-2 h-12 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
+                <MapPin className="w-4 h-4" /> Near Me
               </Button>
             </Link>
           </div>
@@ -145,9 +209,9 @@ const Home = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center opacity-30 grayscale">
-              <Zap className="w-16 h-16 mb-4" />
-              <p className="font-black text-[10px] uppercase tracking-widest">No Services Discovered</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center opacity-30 grayscale saturate-0">
+              <Zap className="w-20 min-h-20 mb-6 text-slate-400" />
+              <p className="font-black text-xs uppercase tracking-widest text-slate-500">No Services Discovered Near You</p>
             </div>
           )}
         </div>

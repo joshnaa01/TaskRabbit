@@ -6,7 +6,8 @@ import {
   getBookingsService,
   updateBookingStatusService,
   completeBookingService,
-  payBookingService
+  payBookingService,
+  complainService
 } from '../services/booking.service.js';
 
 export const createBookingRequest = async (req, res) => {
@@ -80,5 +81,14 @@ export const payBooking = async (req, res) => {
     res.status(200).json({ success: true, message: 'Payment successful', data: booking });
   } catch (error) {
     res.status(error.message.includes('Not authorized') ? 403 : 400).json({ success: false, message: error.message });
+  }
+};
+
+export const submitComplaint = async (req, res) => {
+  try {
+    const result = await complainService(req.params.id, req.user.id, req.body);
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(error.message.includes('Only clients') ? 403 : 500).json({ success: false, message: error.message });
   }
 };

@@ -32,6 +32,7 @@ const BookingSchema = new mongoose.Schema({
   finalPrice: { type: Number },
   paid: { type: Boolean, default: false },
   khaltiTransactionId: { type: String },
+  stripePaymentIntentId: { type: String },
   rejectionReason: { type: String },
   isDisputed: { type: Boolean, default: false },
   dispute: {

@@ -26,7 +26,9 @@ const Register = () => {
     role: 'client', 
     lat: '', 
     lng: '', 
-    profilePicture: '' 
+    profilePicture: '',
+    citizenshipDocument: '',
+    workDocument: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -74,6 +76,10 @@ const Register = () => {
     e.preventDefault();
     if (formData.role === 'provider' && !formData.lat) {
       setError('Location required for providers');
+      return;
+    }
+    if (formData.role === 'provider' && (!formData.citizenshipDocument || !formData.workDocument)) {
+      setError('Citizenship and Work documents are required for providers');
       return;
     }
     if (!isEmailValid || !isPasswordStrong) {
@@ -126,11 +132,23 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Compact Profile Picture - Only for Providers during signup */}
           {formData.role === 'provider' && (
-            <div className="flex justify-center mb-2">
+            <div className="flex flex-col gap-4 mb-2">
               <div className="w-full">
                  <ImageUpload 
                    label="Profile Picture"
                    onUploadSuccess={(url) => setFormData({...formData, profilePicture: url})}
+                 />
+              </div>
+              <div className="w-full">
+                 <ImageUpload 
+                   label="Citizenship Document"
+                   onUploadSuccess={(url) => setFormData({...formData, citizenshipDocument: url})}
+                 />
+              </div>
+              <div className="w-full">
+                 <ImageUpload 
+                   label="Work Document"
+                   onUploadSuccess={(url) => setFormData({...formData, workDocument: url})}
                  />
               </div>
             </div>

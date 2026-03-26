@@ -74,6 +74,16 @@ const UserSchema = new mongoose.Schema(
       },
       address: { type: String }
     },
+    citizenshipDocument: {
+      type: String,
+    },
+    workDocument: {
+      type: String,
+    },
+    isApproved: {
+      type: Boolean,
+      default: false, // For providers, admin must approve. For other roles, it can be set to true on creation.
+    },
   },
   { timestamps: true }
 );

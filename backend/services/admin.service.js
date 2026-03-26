@@ -41,6 +41,8 @@ export const getUsersService = async (role) => {
     return await User.find(query).select('-password').sort({ createdAt: -1 });
 };
 
+import nodemailer from 'nodemailer';
+
 export const updateUserStatusService = async (id, updateBody) => {
     const user = await User.findById(id);
     if (!user) throw new Error('User not found');
@@ -49,6 +51,33 @@ export const updateUserStatusService = async (id, updateBody) => {
     if (updateBody.role) user.role = updateBody.role;
     if (updateBody.status !== undefined) user.status = updateBody.status;
     if (updateBody.isSuspicious !== undefined) user.isSuspicious = updateBody.isSuspicious;
+    
+    if (updateBody.isApproved !== undefined) {
+      const previouslyApproved = user.isApproved;
+      user.isApproved = updateBody.isApproved;
+      
+      if (!previouslyApproved && user.isApproved && user.role === 'provider') {
+        // Send approval email
+        try {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: process.env.EMAIL_USER || 'placeholder@gmail.com',
+              pass: process.env.EMAIL_PASS || 'placeholder_pass'
+            }
+          });
+          
+          await transporter.sendMail({
+            from: process.env.EMAIL_USER || 'placeholder@gmail.com',
+            to: user.email,
+            subject: 'Account Approved - TaskRabbit',
+            html: `<h3>Hello ${user.name},</h3><p>Your provider account has been approved by the admin. You can now log in to the portal and start accepting bookings.</p>`
+          });
+        } catch (error) {
+          console.error("Failed to send approval email:", error);
+        }
+      }
+    }
 
     await user.save();
     return user;
@@ -80,4 +109,42 @@ export const resolveDisputeService = async (id, updateBody) => {
 
     await booking.save();
     return booking;
+};
+
+export const sendEmailService = async (body) => {
+    const { to, role, subject, message } = body;
+    
+    // Find recipients
+    let recipients = [];
+    if (to && to !== 'all') {
+      recipients.push(to);
+    } else if (role) {
+      let query = {};
+      if (role !== 'all') query.role = role;
+      const users = await User.find(query).select('email');
+      recipients = users.map(u => u.email);
+    } else {
+      throw new Error('Please specify recipient or role');
+    }
+
+    if (recipients.length === 0) {
+      throw new Error('No recipients found');
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER || 'placeholder@gmail.com',
+        pass: process.env.EMAIL_PASS || 'placeholder_pass'
+      }
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER || 'placeholder@gmail.com',
+      to: recipients,
+      subject: subject || 'Notification from TaskRabbit',
+      html: `<div>${message?.replace(/\n/g, '<br>')}</div>`
+    });
+
+    return info;
 };
