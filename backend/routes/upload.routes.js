@@ -4,7 +4,20 @@ import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// General image upload (single)
+// General file upload (single) for any supported format
+router.post('/', protect, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+  
+  res.status(200).json({
+    success: true,
+    url: req.file.path,
+    public_id: req.file.filename
+  });
+});
+
+// General image upload (single - legacy support)
 router.post('/image', protect, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });

@@ -3,6 +3,7 @@ import Service from '../models/Service.js';
 import Notification from '../models/Notification.js';
 import Conversation from '../models/Conversation.js';
 import User from '../models/User.js';
+import Review from '../models/Review.js';
 
 export const createBookingService = async (userId, userName, body) => {
   const { serviceId, scheduleDate, timeSlot, address, requirements, price } = body;
@@ -58,8 +59,14 @@ export const createBookingService = async (userId, userName, body) => {
   if (!conversation) {
     conversation = await Conversation.create({
       participants: [userId, service.providerId],
-      lastMessage: `A new booking has been initiated for "${service.title}"`
+      lastMessage: `A new booking has been initiated for "${service.title}"`,
+      status: 'open'
     });
+  } else {
+    // Re-open if closed
+    conversation.status = 'open';
+    conversation.lastMessage = `A new task cycle initiated for "${service.title}"`;
+    await conversation.save();
   }
 
   await Notification.create({
@@ -83,31 +90,18 @@ export const submitDeliverablesService = async (bookingId, userId, body) => {
   if (booking.providerId.toString() !== userId) throw new Error('Not authorized');
 
   booking.deliverables = { files, message, submittedAt: Date.now() };
-  booking.status = 'Completed';
+  booking.status = 'Pending Review';
   await booking.save();
 
-  const conversation = await Conversation.findOne({ participants: { $all: [booking.clientId, booking.providerId] } });
-
-  // Notify the client
-  await Notification.create({
-    recipient: booking.clientId,
-    sender: userId,
-    type: 'work_submitted',
-    title: 'Work Submitted',
-    message: `Your Tasker has submitted deliverables for your booking.`,
-    bookingId: booking._id,
-    conversationId: conversation?._id
-  });
-
-  // Also notify admin about the submission
+  // Notify admin only — evidence is submitted to admin for review, NOT the client
   const admins = await User.find({ role: 'admin' });
   for (const admin of admins) {
     await Notification.create({
       recipient: admin._id,
       sender: userId,
       type: 'work_submitted',
-      title: 'Deliverables Submitted for Review',
-      message: `A provider has submitted deliverables for booking #${booking._id.toString().slice(-6)}. Please review.`,
+      title: 'Work Submitted — Admin Review Required',
+      message: `A provider has submitted deliverables for booking #${booking._id.toString().slice(-6)}. Please review and approve completion.`,
       bookingId: booking._id,
     });
   }
@@ -184,9 +178,16 @@ export const getBookingsService = async (user) => {
     .populate('serviceId')
     .populate('clientId', 'name')
     .populate('providerId', 'name')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean(); // Use lean to allow manual attachment of review data
 
-  const sorted = [...bookings].sort((a, b) => {
+  const bookingIds = bookings.map(b => b._id);
+  const reviews = await Review.find({ bookingId: { $in: bookingIds } }).lean();
+
+  const sorted = bookings.map(booking => {
+     const review = reviews.find(r => r.bookingId.toString() === booking._id.toString());
+     return { ...booking, review };
+  }).sort((a, b) => {
     if (a.status === 'Cancelled' && b.status !== 'Cancelled') return 1;
     if (a.status !== 'Cancelled' && b.status === 'Cancelled') return -1;
     return 0;
@@ -252,7 +253,7 @@ export const completeBookingService = async (bookingId, userId, body) => {
     throw new Error('Only providers can complete bookings');
   }
 
-  booking.status = 'Completed';
+  booking.status = 'Pending Review';
 
   if (files || message) {
     booking.deliverables = {
@@ -263,26 +264,15 @@ export const completeBookingService = async (bookingId, userId, body) => {
   }
   await booking.save();
 
-  const conversation = await Conversation.findOne({ participants: { $all: [booking.clientId, booking.providerId] } });
-  await Notification.create({
-    recipient: booking.clientId,
-    sender: userId,
-    type: 'booking_completed',
-    title: 'Booking Completed',
-    message: `Your booking has been marked as completed by your Tasker.`,
-    bookingId: booking._id,
-    conversationId: conversation?._id
-  });
-
-  // Also notify admin
+  // Notify admin only — evidence goes to admin for approval, NOT the client
   const admins = await User.find({ role: 'admin' });
   for (const admin of admins) {
     await Notification.create({
       recipient: admin._id,
       sender: userId,
-      type: 'booking_completed',
-      title: 'Booking Completed - Admin Review',
-      message: `Booking #${booking._id.toString().slice(-6)} has been completed. Deliverables attached.`,
+      type: 'completion_review',
+      title: 'Completion Review Required',
+      message: `Provider has marked booking #${booking._id.toString().slice(-6)} as completed with evidence. Please review and approve.`,
       bookingId: booking._id,
     });
   }

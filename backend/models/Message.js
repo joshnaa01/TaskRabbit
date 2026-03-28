@@ -5,6 +5,7 @@ const MessageSchema = new mongoose.Schema({
   senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   content: { type: String },
   fileUrl: { type: String },
+  type: { type: String, enum: ['text', 'image', 'file', 'voice'], default: 'text' },
   readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 

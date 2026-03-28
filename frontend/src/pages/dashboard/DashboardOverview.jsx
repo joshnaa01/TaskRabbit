@@ -51,17 +51,15 @@ const DashboardOverview = () => {
 
     return (
         <div className="flex flex-col gap-10">
-            {/* Header only for non-clients (Providers/Admins) as clients have it in Layout */}
-            {!isClient && (
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-                        {user?.role === 'provider' ? 'Provider Console' : 'My Dashboard'}, {user?.name?.split(' ')[0]}!
-                    </h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-xs mt-2">
-                        {user?.role === 'provider' ? 'Manage your services and track earnings' : 'Track your active service requests and history'}
-                    </p>
-                </div>
-            )}
+            {/* Unified Page Header */}
+            <div>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                    {user?.role === 'provider' ? 'Provider Console' : user?.role === 'admin' ? 'Administrative Core' : 'Account Intelligence Hub'}, {user?.name?.split(' ')[0]}!
+                </h1>
+                <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2 tracking-[0.2em]">
+                    {user?.role === 'provider' ? 'Manage your service inventory and track performance' : user?.role === 'admin' ? 'Oversee platform health and verify operations' : 'Track your active collaborations and service history'}
+                </p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                {stats.map((stat, i) => (

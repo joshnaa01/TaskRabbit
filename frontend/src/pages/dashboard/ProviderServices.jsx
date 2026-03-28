@@ -35,18 +35,24 @@ const ProviderServices = () => {
     const [editModalId, setEditModalId] = useState(null);
     const [categories, setCategories] = useState([]);
 
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalResults, setTotalResults] = useState(0);
+
     const fetchServices = useCallback(async () => {
        try {
           setLoading(true);
-          const res = await api.get(`/services/my`);
+          const res = await api.get(`/services/my`, { params: { page, limit: 10 } });
           setServices(res.data.data || []);
+          setTotalPages(res.data.pages || 1);
+          setTotalResults(res.data.total || 0);
           setError(null);
        } catch (err) {
           setError(err.response?.data?.message || err.message);
        } finally {
           setLoading(false);
        }
-    }, [user._id]);
+    }, [user._id, page]);
 
     useEffect(() => {
        fetchServices();
@@ -352,6 +358,40 @@ const ProviderServices = () => {
                      ))}
                   </tbody>
                </table>
+            </div>
+         )}
+
+         {/* Pagination Controls */}
+         {totalPages > 1 && (
+            <div className="flex flex-col items-center gap-6 pt-12 border-t border-slate-100">
+               <div className="flex items-center gap-4">
+                  <button 
+                     onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                     disabled={page === 1}
+                     className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30"
+                  >
+                     Previous Part
+                  </button>
+                  <div className="flex items-center gap-2 px-2">
+                     {[...Array(totalPages)].map((_, i) => (
+                        <button
+                           key={i}
+                           onClick={() => { setPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                           className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${page === i + 1 ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20 scale-110' : 'bg-white text-slate-400 border border-slate-50 hover:bg-slate-50'}`}
+                        >
+                           {i + 1}
+                        </button>
+                     ))}
+                  </div>
+                  <button 
+                     onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                     disabled={page === totalPages}
+                     className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30"
+                  >
+                     Next Part
+                  </button>
+               </div>
+               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Inventory segment {page} of {totalPages}</p>
             </div>
          )}
 

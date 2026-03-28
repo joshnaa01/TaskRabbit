@@ -23,6 +23,9 @@ const SearchPage = () => {
   const [categories, setCategories] = useState([]);
   const [results, setResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
   // Fetch categories once
   useEffect(() => {
@@ -37,26 +40,32 @@ const SearchPage = () => {
     fetchCategories();
   }, []);
 
-  // Fetch nearby services whenever params or coords change
+  // Fetch nearby services
   useEffect(() => {
-    if (!coords?.lat || !coords?.lng) return;
-
+    // If coords are loading or missing, we can still show a generic list 
+    // but the backend geonear requires them. Let's wait or fetch all if missing?
+    // User wants "pagination for services", let's ensure it works even without geo
+    
     const fetchServices = async () => {
       setSearchLoading(true);
       try {
         const res = await api.get('/services/nearby', {
           params: {
-            lat: coords.lat,
-            lng: coords.lng,
+            lat: coords?.lat,
+            lng: coords?.lng,
             radius: params.radius,
             keyword: params.keyword,
             category: params.category,
             minPrice: params.minPrice,
             maxPrice: params.maxPrice,
-            rating: params.rating
+            rating: params.rating,
+            page,
+            limit: 12
           }
         });
         setResults(res.data.data || []);
+        setTotalPages(res.data.pages || 1);
+        setTotalResults(res.data.total || 0);
       } catch (err) {
         console.error('Search failed:', err);
         setResults([]);
@@ -66,14 +75,16 @@ const SearchPage = () => {
     };
 
     fetchServices();
-  }, [coords, params]);
+  }, [coords, params, page]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setParams(prev => ({ ...prev, ...newFilters }));
+    setPage(1);
   }, []);
 
   const handleSearch = useCallback((newSearch) => {
     setParams(prev => ({ ...prev, ...newSearch }));
+    setPage(1);
   }, []);
 
   return (
@@ -85,7 +96,7 @@ const SearchPage = () => {
             {params.keyword ? `Search Results for "${params.keyword}"` : 'Discover Top Experts'}
           </h1>
           <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px]">
-            {results.length > 0 ? `Found ${results.length} verified pros in your area` : 'Showing premium services within your vicinity'}
+            {totalResults > 0 ? `Found ${totalResults} verified pros in your area` : 'Showing premium services within your vicinity'}
           </p>
         </div>
 
@@ -98,7 +109,7 @@ const SearchPage = () => {
 
         <FilterBar onFilterChange={handleFilterChange} categories={categories} />
 
-        <div className="pt-6">
+        <div className="pt-6 pb-20">
           {geoLoading ? (
             <div className="h-72 flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
               <Navigation className="w-10 h-10 text-blue-600 animate-pulse mb-4" />
@@ -123,11 +134,56 @@ const SearchPage = () => {
               ))}
             </div>
           ) : results.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {results.map((service) => (
-                <ServiceCard key={service._id} service={service} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {results.map((service) => (
+                  <ServiceCard key={service._id} service={service} />
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-20 flex flex-col items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={page === 1}
+                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
+                    >
+                      Prev Sequence
+                    </button>
+
+                    <div className="flex items-center gap-1.5 px-4">
+                      {[...Array(totalPages)].map((_, i) => {
+                        const pageNum = i + 1;
+                        if (totalPages > 5 && Math.abs(pageNum - page) > 2 && pageNum !== 1 && pageNum !== totalPages) {
+                          if (Math.abs(pageNum - page) === 3) return <span key={i} className="text-slate-300 px-1">...</span>;
+                          return null;
+                        }
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => { setPage(pageNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className={`w-10 h-10 rounded-xl text-[11px] font-black transition-all ${page === pageNum ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-110' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button 
+                      onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={page === totalPages}
+                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
+                    >
+                      Next Sequence
+                    </button>
+                  </div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Viewing Data Segment {page} of {totalPages}</p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="h-[500px] flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 p-12 text-center">
               <div className="bg-slate-50 p-8 rounded-full mb-8 border border-slate-100">

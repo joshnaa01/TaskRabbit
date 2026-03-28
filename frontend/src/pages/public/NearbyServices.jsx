@@ -21,6 +21,9 @@ const NearbyServices = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [radius, setRadius] = useState(searchParams.get('radius') || 20); // default 20km
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
   const fetchNearby = useCallback(async () => {
     if (!geoCoords?.lat || !geoCoords?.lng) return;
@@ -31,16 +34,20 @@ const NearbyServices = () => {
         lat: geoCoords.lat,
         lng: geoCoords.lng,
         radius: radius * 1000, // convert km to meters
+        page,
+        limit: 12,
         ...Object.fromEntries([...searchParams])
       };
       const res = await api.get('/services/nearby', { params });
-      setServices(res.data.data);
+      setServices(res.data.data || []);
+      setTotalPages(res.data.pages || 1);
+      setTotalResults(res.data.total || 0);
     } catch (err) {
       console.error('Error fetching nearby services:', err);
     } finally {
       setLoading(false);
     }
-  }, [geoCoords, searchParams, radius]);
+  }, [geoCoords, searchParams, radius, page]);
 
   useEffect(() => {
     fetchNearby();
@@ -49,6 +56,7 @@ const NearbyServices = () => {
   const updateRadius = (e) => {
     const val = e.target.value;
     setRadius(val);
+    setPage(1);
     const newParams = new URLSearchParams(searchParams);
     newParams.set('radius', val);
     setSearchParams(newParams);
@@ -108,15 +116,15 @@ const NearbyServices = () => {
                  <input 
                    type="range" 
                    min="1" 
-                   max="50" 
+                   max="100" 
                    value={radius} 
                    onChange={updateRadius}
                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                  />
                  <div className="flex justify-between mt-4 text-[10px] font-black text-slate-500 uppercase">
                     <span>1km</span>
-                    <span>25km</span>
                     <span>50km</span>
+                    <span>100km</span>
                  </div>
               </div>
            </div>
@@ -148,11 +156,56 @@ const NearbyServices = () => {
                 ))}
              </div>
            ) : services.length > 0 ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {services.map((s) => (
-                  <ServiceCard key={s._id} service={s} />
-                ))}
-             </div>
+             <>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {services.map((s) => (
+                    <ServiceCard key={s._id} service={s} />
+                  ))}
+               </div>
+
+               {/* Pagination Controls */}
+               {totalPages > 1 && (
+                <div className="mt-20 flex flex-col items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={page === 1}
+                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
+                    >
+                      Previous
+                    </button>
+
+                    <div className="flex items-center gap-1.5 px-4">
+                      {[...Array(totalPages)].map((_, i) => {
+                        const pageNum = i + 1;
+                        if (totalPages > 5 && Math.abs(pageNum - page) > 2 && pageNum !== 1 && pageNum !== totalPages) {
+                          if (Math.abs(pageNum - page) === 3) return <span key={i} className="text-slate-300 px-1">...</span>;
+                          return null;
+                        }
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => { setPage(pageNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className={`w-10 h-10 rounded-xl text-[11px] font-black transition-all ${page === pageNum ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-110' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button 
+                      onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={page === totalPages}
+                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Showing region {page} of {totalPages}</p>
+                </div>
+               )}
+             </>
            ) : (
              <div className="flex flex-col items-center justify-center py-20 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                 <div className="bg-white p-8 rounded-full mb-8 shadow-xl shadow-slate-200/50">

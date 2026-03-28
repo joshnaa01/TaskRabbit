@@ -102,20 +102,21 @@ export const deleteService = async (req, res) => {
 
 export const getServicesNearby = async (req, res) => {
   try {
-    const { lat, lng, radius, category, minPrice, maxPrice, keyword } = req.query;
+    const { lat, lng, radius, category, minPrice, maxPrice, keyword, page = 1, limit = 12 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Validation
     if (!lat || !lng) {
-      return res.status(400).json({ success: false, message: 'Latitude and longitude are required' });
+      return res.status(200).json({ success: true, data: [], total: 0 }); // Fallback for no location
     }
 
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
 
-    // 2. Radius Constraints (1km - 50km)
+    // 2. Radius Constraints (1km - 100km)
     let searchRadiusKm = parseFloat(radius);
-    if (!searchRadiusKm || searchRadiusKm < 1) searchRadiusKm = 1;
-    if (searchRadiusKm > 50) searchRadiusKm = 50;
+    if (!searchRadiusKm || searchRadiusKm < 1) searchRadiusKm = 10;
+    if (searchRadiusKm > 100) searchRadiusKm = 100;
 
     const radiusInMeters = searchRadiusKm * 1000;
 
@@ -206,7 +207,7 @@ export const getServicesNearby = async (req, res) => {
       }
     }));
 
-    // Merge and de-duplicate (onsite services might also be marked as remote)
+    // Merge and de-duplicate
     const combined = [...providers, ...formattedRemote];
     const uniqueIds = new Set();
     const deDuplicated = combined.filter(item => {
@@ -223,9 +224,16 @@ export const getServicesNearby = async (req, res) => {
       return a.distance - b.distance;
     });
 
+    // Manual Pagination of the sorted results
+    const total = sortedResults.length;
+    const paginatedResults = sortedResults.slice(skip, skip + Number(limit));
+
     res.status(200).json({
       success: true,
-      data: sortedResults
+      total,
+      pages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
+      data: paginatedResults
     });
 
   } catch (error) {

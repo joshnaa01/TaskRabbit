@@ -21,7 +21,8 @@ import {
   Tag,
   Users,
   X,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import Header from './Header';
@@ -43,6 +44,10 @@ const DashboardLayout = ({ children }) => {
         setNotifications(res.data.data);
         setUnreadCount(res.data.unreadCount);
       } catch (err) {
+        if (err.response?.status === 401) {
+          logout();
+          navigate('/login');
+        }
         console.error("Notifications fetch failure");
       }
     };
@@ -66,27 +71,29 @@ const DashboardLayout = ({ children }) => {
   };
 
   const getNavItems = () => {
+    const rolePrefix = `/${user?.role}`;
     const shared = [
-      { label: 'Overview', icon: BarChart3, path: '/dashboard' },
-      { label: 'Bookings', icon: Calendar, path: '/dashboard/bookings' },
-      { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages' },
+      { label: 'Overview', icon: BarChart3, path: `${rolePrefix}/dashboard` },
+      { label: 'Bookings', icon: Calendar, path: `${rolePrefix}/bookings` },
+      { label: 'Messages', icon: MessageSquare, path: `${rolePrefix}/messages` },
     ];
 
     const clientItems = [
-      { label: 'Payments', icon: CreditCard, path: '/dashboard/payments' },
+      { label: 'Payments', icon: CreditCard, path: '/client/payments' },
     ];
 
     const providerItems = [
-      { label: 'My Services', icon: Briefcase, path: '/dashboard/services' },
-      { label: 'Earnings', icon: DollarSign, path: '/dashboard/earnings' },
+      { label: 'My Services', icon: Briefcase, path: '/provider/services' },
+      { label: 'Earnings', icon: DollarSign, path: '/provider/earnings' },
     ];
 
     const adminItems = [
-      { label: 'Platform Controls', icon: Shield, path: '/admin' },
-      { label: 'Identity Directory', icon: Users, path: '/dashboard/users' },
-      { label: 'Service Domains', icon: Tag, path: '/dashboard/categories' },
-      { label: 'Secure Payments', icon: CreditCard, path: '/dashboard/payments' },
-      { label: 'Dispute Console', icon: AlertCircle, path: '/dashboard/disputes' },
+      { label: 'Platform Controls', icon: Shield, path: '/admin/dashboard' },
+      { label: 'Identity Directory', icon: Users, path: '/admin/users' },
+      { label: 'Service Domains', icon: Tag, path: '/admin/categories' },
+      { label: 'Verification Queue', icon: CheckCircle2, path: '/admin/verification-queue' },
+      { label: 'Secure Payments', icon: CreditCard, path: '/admin/payments' },
+      { label: 'Dispute Console', icon: AlertCircle, path: '/admin/disputes' },
     ];
 
     switch (user?.role) {
@@ -106,19 +113,23 @@ const DashboardLayout = ({ children }) => {
            <Header />
 
            {/* Dashboard Sub-Nav for Clients */}
-           <div className="fixed top-20 inset-x-0 h-16 bg-white/50 backdrop-blur-md border-b border-slate-50 z-40 flex items-center">
-              <div className="max-w-7xl mx-auto px-8 w-full flex items-center gap-8">
+           <div className="fixed top-20 inset-x-0 h-14 bg-white/40 backdrop-blur-xl border-b border-slate-100/50 z-40 flex items-center shadow-sm">
+              <div className="max-w-7xl mx-auto px-8 w-full flex items-center gap-10">
                  {navItems.map((item) => {
                     const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                     return (
                        <Link 
                           key={item.label} 
                           to={item.path} 
-                          className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all relative py-1
+                          className={`text-[9px] font-black uppercase tracking-[0.25em] transition-all relative py-2 flex items-center gap-2 group
                              ${isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}
                           `}
                        >
-                          {item.label}
+                          <span>{item.label}</span>
+                          {isActive && (
+                             <span className="w-1 h-1 rounded-full bg-blue-600 animate-in fade-in zoom-in duration-300" />
+                          )}
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transition-all duration-300 transform scale-x-0 group-hover:scale-x-100 ${isActive ? 'scale-x-100 opacity-0' : 'opacity-0'}`} />
                        </Link>
                     );
                  })}
@@ -126,13 +137,13 @@ const DashboardLayout = ({ children }) => {
            </div>
 
            {/* Mobile Tab Bar (Bottom) */}
-           <div className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 h-16 flex items-center justify-around z-50 px-4 shadow-2xl shadow-blue-900/10">
+           <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-2xl border-t border-slate-100 h-18 flex items-center justify-around z-50 px-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] pb-safe">
               {navItems.map((item) => {
                  const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                  return (
-                    <Link key={item.label} to={item.path} className={`flex flex-col items-center gap-1 ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
-                       <item.icon className="w-5 h-5" />
-                       <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
+                    <Link key={item.label} to={item.path} className={`flex flex-col items-center gap-1.5 py-2 px-4 rounded-2xl transition-all ${isActive ? 'text-blue-600 bg-blue-50/50' : 'text-slate-400 hover:bg-slate-50'}`}>
+                       <item.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                       <span className="text-[7px] font-black uppercase tracking-[0.15em]">{item.label}</span>
                     </Link>
                  );
               })}
@@ -141,19 +152,6 @@ const DashboardLayout = ({ children }) => {
            {/* Content Container */}
            <main className="flex-1 pt-44 pb-24 md:pb-12 bg-[#F8FAFC]">
               <div className="max-w-7xl mx-auto px-8">
-                 {/* Page Header Area for Client */}
-                 <div className="mb-10 flex items-center justify-between">
-                    <div>
-                       <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">
-                          {navItems.find(i => location.pathname === i.path || (i.path !== '/dashboard' && location.pathname.startsWith(i.path)))?.label || 'Dashboard'}
-                       </h1>
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Identity Hub — Secure Access</p>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/5">
-                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                       <span className="text-[9px] font-black uppercase tracking-widest">Client Sync Active</span>
-                    </div>
-                 </div>
                  {children}
               </div>
            </main>

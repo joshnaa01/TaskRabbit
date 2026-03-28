@@ -81,38 +81,43 @@ io.on('connection', (socket) => {
   });
 
   // Handle sending message
+  // Handle sending message
   socket.on('sendMessage', async (data) => {
     try {
-      const { conversationId, senderId, content, fileUrl } = data;
+      const { conversationId, senderId, content, fileUrl, type } = data;
+
+      // 0. Check conversation status
+      const session = await Conversation.findById(conversationId);
+      if (!session || session.status === 'closed') {
+        console.warn(`Blocked message to ${session?.status || 'unknown'} conversation: ${conversationId}`);
+        return;
+      }
 
       // 1. Save to DB
-      const message = await Message.create({ conversationId, senderId, content, fileUrl });
+      const message = await Message.create({ conversationId, senderId, content, fileUrl, type: type || 'text' });
 
       // Update Conversation's lastMessage
-      let updatedLastMsg = fileUrl ? 'Sent a file' : content;
-      await Conversation.findByIdAndUpdate(conversationId, {
-        lastMessage: updatedLastMsg,
-        updatedAt: Date.now()
-      });
+      let updatedLastMsg = content;
+      if (type === 'voice') updatedLastMsg = 'Sent a voice message';
+      else if (type === 'image') updatedLastMsg = 'Sent an image';
+      else if (fileUrl && !content) updatedLastMsg = 'Sent a file';
+      
+      session.lastMessage = updatedLastMsg;
+      session.updatedAt = Date.now();
+      await session.save();
 
       // 2. Create Notification for the other participant
-      const session = await Conversation.findById(conversationId);
-      if (session) {
-        const recipientId = session.participants.find(p => p.toString() !== senderId.toString());
-        if (recipientId) {
-          await Notification.create({
-            recipient: recipientId,
-            sender: senderId,
-            type: 'message',
-            title: `New message from ${data.senderName || 'Participant'}`,
-            message: content,
-            conversationId: conversationId,
-            isRead: false
-          });
-          
-          // Optionally emit notification count update via socket to recipient if online
-          // io.to(recipientId.toString()).emit('newNotification', { type: 'message' });
-        }
+      const recipientId = session.participants.find(p => p.toString() !== senderId.toString());
+      if (recipientId) {
+        await Notification.create({
+          recipient: recipientId,
+          sender: senderId,
+          type: 'message',
+          title: `New message from ${data.senderName || 'Participant'}`,
+          message: content,
+          conversationId: conversationId,
+          isRead: false
+        });
       }
 
       // 3. Emit to room

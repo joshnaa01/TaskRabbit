@@ -87,8 +87,8 @@ const ServiceDetails = () => {
       
       setSubmitting(true);
       try {
-         // 1. Create the booking record first (Pending status)
-         const res = await api.post('/bookings', {
+         // 1. Create the booking record (Pending status)
+         await api.post('/bookings', {
             serviceId: service._id,
             scheduleDate: bookingData.scheduleDate,
             timeSlot: {
@@ -103,11 +103,9 @@ const ServiceDetails = () => {
             basePrice: service.price
          });
 
-         // 2. Open Stripe Payment Modal for this booking
-         setPaymentModal({
-            open: true,
-            booking: res.data.data
-         });
+         // 2. Direct to dashboard without immediate payment
+         toast.success("Booking request transmitted! Awaiting provider acceptance.");
+         navigate('/dashboard/bookings');
 
       } catch (err) {
          toast.error(err.response?.data?.message || "Transmission failed.");

@@ -6,7 +6,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'taskrabbit_mern',
-    allowedFormats: ['jpg', 'png', 'jpeg', 'pdf'],
+    allowedFormats: ['jpg', 'png', 'jpeg', 'pdf', 'mp3', 'wav', 'm4a', 'webm'],
   },
 });
 

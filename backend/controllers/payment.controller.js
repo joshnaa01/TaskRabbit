@@ -85,14 +85,30 @@ export const confirmPayment = async (req, res) => {
     booking.stripePaymentIntentId = paymentIntentId;
     await booking.save();
 
-    // Notify provider
+    // Notify provider and update conversation status
     const conversation = await Conversation.findOne({ participants: { $all: [booking.providerId, booking.clientId] } });
+    
+    // Check if there are other active bookings between these users
+    const activeBookings = await Booking.countDocuments({
+      _id: { $ne: bookingId },
+      clientId: booking.clientId,
+      providerId: booking.providerId,
+      status: { $in: ['Pending', 'Accepted', 'In Progress', 'Pending Review', 'Disputed'] },
+      paid: false
+    });
+
+    if (activeBookings === 0 && conversation) {
+      conversation.status = 'closed';
+      conversation.lastMessage = 'Collaboration cycle concluded.';
+      await conversation.save();
+    }
+
     await Notification.create({
       recipient: booking.providerId,
       sender: req.user.id,
       type: 'payment_received',
       title: 'Payment Received',
-      message: `You have received a payment of $${grossAmount.toFixed(2)} for the completed booking.`,
+      message: `You have received a payment of $${grossAmount.toFixed(2)} for the completed booking.${activeBookings === 0 ? ' The conversation is now closed.' : ''}`,
       bookingId: booking._id,
       conversationId: conversation?._id
     });

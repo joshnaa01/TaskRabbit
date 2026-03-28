@@ -11,17 +11,21 @@ import {
     RefreshCcw,
     Check,
     Ban,
-    Mail
+    Mail,
+    MessageSquare
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminEmailModal from './AdminEmailModal';
 
 const AdminUsers = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [emailModal, setEmailModal] = useState({ open: false, target: 'all' });
+    const [selectedUserIds, setSelectedUserIds] = useState([]);
 
     const fetchUsers = async () => {
         try {
@@ -81,6 +85,30 @@ const AdminUsers = () => {
         }
     };
 
+    const handleCreateGroup = () => {
+        if (selectedUserIds.length === 0) return;
+        // Join IDs with comma to pass in URL or handle via state/context if possible
+        // For now, let's navigate to chat and maybe we can handle a 'participants' query param
+        // But the Chat component currently only handles 'to=id'
+        // Let's improve Chat.jsx later to handle multiple 'to' if needed, or just navigate and let session be created
+        // Actually, easier to navigate to chat and if multiple are selected, open the group modal with these IDs pre-selected
+        navigate('/admin/messages', { state: { preSelectedIds: selectedUserIds } });
+    };
+
+    const toggleUserSelection = (id) => {
+        setSelectedUserIds(prev => 
+            prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+        );
+    };
+
+    const toggleAllSelection = () => {
+        if (selectedUserIds.length === filteredUsers.length) {
+            setSelectedUserIds([]);
+        } else {
+            setSelectedUserIds(filteredUsers.map(u => u._id));
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -94,6 +122,14 @@ const AdminUsers = () => {
                     <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Oversee Clients, Taskers, and Staff</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {selectedUserIds.length > 0 && (
+                        <button
+                            onClick={handleCreateGroup}
+                            className="flex items-center gap-3 px-8 py-3.5 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all animate-in fade-in slide-in-from-right-4"
+                        >
+                            <MessageSquare className="w-4 h-4" /> Group Message ({selectedUserIds.length})
+                        </button>
+                    )}
                     <button
                         onClick={() => setEmailModal({ open: true, target: filterRole === 'all' ? 'all' : filterRole })}
                         className="flex items-center gap-3 px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 hover:bg-blue-600 hover:shadow-blue-600/40 transition-all"
@@ -138,6 +174,14 @@ const AdminUsers = () => {
                     <table className="w-full text-left border-collapse min-w-[1000px]">
                         <thead>
                             <tr className="bg-slate-50/50">
+                                <th className="px-10 py-8 w-10">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/20"
+                                        checked={filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length}
+                                        onChange={toggleAllSelection}
+                                    />
+                                </th>
                                 <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Identity Record</th>
                                 <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Authorization Check</th>
                                 <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Access Controls</th>
@@ -147,7 +191,15 @@ const AdminUsers = () => {
                             {loading ? (
                                 <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Running identity scan...</td></tr>
                             ) : filteredUsers.length > 0 ? filteredUsers.map((user) => (
-                                <tr key={user._id} className="group hover:bg-slate-50/50 transition-all">
+                                <tr key={user._id} className={`group hover:bg-slate-50/50 transition-all ${selectedUserIds.includes(user._id) ? 'bg-blue-50/30' : ''}`}>
+                                    <td className="px-10 py-8">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/20"
+                                            checked={selectedUserIds.includes(user._id)}
+                                            onChange={() => toggleUserSelection(user._id)}
+                                        />
+                                    </td>
                                     <td className="px-10 py-8">
                                         <div className="flex items-center gap-5">
                                             <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 overflow-hidden text-blue-600 font-black text-xl">
@@ -186,6 +238,13 @@ const AdminUsers = () => {
                                     </td>
                                     <td className="px-10 py-8 text-right">
                                         <div className="flex justify-end gap-3 items-center opacity-50 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => navigate(`/admin/messages?to=${user._id}`)}
+                                                className="p-3.5 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
+                                                title="Internal Message"
+                                            >
+                                                <MessageSquare className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => setEmailModal({ open: true, target: user.email })}
                                                 className="p-3.5 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm"

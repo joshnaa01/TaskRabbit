@@ -7,10 +7,10 @@ import connectDB from './config/db.js';
 const seedAdmin = async () => {
   try {
     await connectDB();
-    
-    const adminEmail = 'joshn.admin@gmail.com';
+
+    const adminEmail = 'joshna.admin@gmail.com';
     const existingAdmin = await User.findOne({ email: adminEmail });
-    
+
     if (existingAdmin) {
       console.log('Admin already exists!');
       existingAdmin.role = 'admin';
@@ -28,7 +28,7 @@ const seedAdmin = async () => {
       await admin.save();
       console.log('Admin seeded successfully!');
     }
-    
+
     process.exit(0);
   } catch (error) {
     console.error('Error seeding admin:', error);

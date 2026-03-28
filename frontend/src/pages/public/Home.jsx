@@ -34,6 +34,9 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroSearch, setHeroSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
   const handleHeroSearch = (e) => {
     e?.preventDefault();
@@ -44,14 +47,22 @@ const Home = () => {
   const fetchServices = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/services', { params: Object.fromEntries([...searchParams]) });
+      const res = await api.get('/services', { 
+        params: { 
+          ...Object.fromEntries([...searchParams]),
+          page,
+          limit: 6 // Show 6 per page on home for better density
+        } 
+      });
       setServices(res.data.data);
+      setTotalPages(res.data.pages || 1);
+      setTotalResults(res.data.total || 0);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams, page]);
 
   const fetchCategories = async () => {
     try {
@@ -187,7 +198,7 @@ const Home = () => {
             <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mt-3">Premium Taskers in your immediate vicinity</p>
           </div>
           <div className="flex gap-4">
-            <Link to="/search">
+            <Link to="/nearby">
               <Button variant="outline" className="rounded-2xl border-slate-200 font-black text-[10px] uppercase tracking-widest px-8 gap-2 h-12 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
                 <MapPin className="w-4 h-4" /> Near Me
               </Button>
@@ -203,10 +214,46 @@ const Home = () => {
               ))}
             </div>
           ) : services.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {services.map((service) => (
-                <ServiceCard key={service._id} service={{...service, provider: service.providerId}} />
-              ))}
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {services.map((service) => (
+                  <ServiceCard key={service._id} service={{...service, provider: service.providerId}} />
+                ))}
+              </div>
+
+              {/* Home Pagination */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center gap-6 pt-12 border-t border-slate-50">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 800, behavior: 'smooth' }); }}
+                      disabled={page === 1}
+                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-30"
+                    >
+                      Prev Sequence
+                    </button>
+                    <div className="flex items-center gap-2 px-4">
+                       {[...Array(totalPages)].map((_, i) => (
+                         <button
+                           key={i}
+                           onClick={() => { setPage(i + 1); window.scrollTo({ top: 800, behavior: 'smooth' }); }}
+                           className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${page === i + 1 ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20 scale-110' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                         >
+                           {i + 1}
+                         </button>
+                       ))}
+                    </div>
+                    <button 
+                      onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 800, behavior: 'smooth' }); }}
+                      disabled={page === totalPages}
+                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-30"
+                    >
+                      Next Sequence
+                    </button>
+                  </div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Viewing experts segment {page} of {totalPages}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-30 grayscale saturate-0">

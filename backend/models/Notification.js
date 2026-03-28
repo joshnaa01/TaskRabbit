@@ -9,11 +9,14 @@ const NotificationSchema = new mongoose.Schema({
       'booking_request',
       'booking_accepted',
       'booking_completed',
+      'booking_cancelled',
       'payment_received',
       'message',
       'work_submitted',
+      'completion_review',
       'revision_requested',
-      'booking_update'
+      'booking_update',
+      'complaint'
     ],
     required: true
   },

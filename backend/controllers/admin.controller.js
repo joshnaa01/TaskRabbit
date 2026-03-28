@@ -4,7 +4,10 @@ import {
   updateUserStatusService, 
   deleteUserService, 
   resolveDisputeService,
-  sendEmailService
+  sendEmailService,
+  getPendingReviewBookingsService,
+  approveCompletionService,
+  rejectCompletionService
 } from '../services/admin.service.js';
 
 export const getAdminStats = async (req, res) => {
@@ -50,7 +53,7 @@ export const deleteUser = async (req, res) => {
 // Admin: Resolve Dispute
 export const resolveDispute = async (req, res) => {
   try {
-    const booking = await resolveDisputeService(req.params.id, req.body);
+    const booking = await resolveDisputeService(req.params.id, req.body, req.user.id);
     res.status(200).json({ success: true, data: booking });
   } catch (error) {
     res.status(error.message.includes('not found') ? 404 : 500).json({ success: false, message: error.message });
@@ -64,5 +67,37 @@ export const sendEmail = async (req, res) => {
     res.status(200).json({ success: true, message: 'Email(s) sent successfully', info });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin: Get Bookings Pending Completion Review
+export const getPendingReviews = async (req, res) => {
+  try {
+    const bookings = await getPendingReviewBookingsService();
+    res.status(200).json({ success: true, data: bookings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin: Approve Completion
+export const approveCompletion = async (req, res) => {
+  try {
+    const booking = await approveCompletionService(req.params.id, req.user.id);
+    res.status(200).json({ success: true, message: 'Completion approved', data: booking });
+  } catch (error) {
+    res.status(error.message.includes('not found') ? 404 : 400).json({ success: false, message: error.message });
+  }
+};
+
+// Admin: Reject Completion
+export const rejectCompletion = async (req, res) => {
+  try {
+    const { feedback } = req.body;
+    if (!feedback) return res.status(400).json({ success: false, message: 'Feedback is required' });
+    const booking = await rejectCompletionService(req.params.id, req.user.id, feedback);
+    res.status(200).json({ success: true, message: 'Completion rejected, provider notified', data: booking });
+  } catch (error) {
+    res.status(error.message.includes('not found') ? 404 : 400).json({ success: false, message: error.message });
   }
 };

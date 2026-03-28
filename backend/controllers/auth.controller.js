@@ -115,7 +115,7 @@ export const getMe = async (req, res) => {
     const user = await User.findById(req.user.id);
     res.status(200).json({
       success: true,
-      user
+      data: user
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
@@ -147,7 +147,7 @@ export const updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user
+      data: user
     });
   } catch (error) {
     console.error("Profile Update Error:", error);

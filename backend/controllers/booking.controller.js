@@ -26,7 +26,10 @@ export const submitDeliverables = async (req, res) => {
     const booking = await submitDeliverablesService(req.params.id, req.user.id, req.body);
     res.status(200).json({ success: true, message: 'Work submitted successfully', data: booking });
   } catch (error) {
-    res.status(error.message === 'Not authorized' ? 403 : 500).json({ success: false, message: error.message });
+    let status = 500;
+    if (error.message.includes('not found')) status = 404;
+    else if (error.message === 'Not authorized') status = 403;
+    res.status(status).json({ success: false, message: error.message });
   }
 };
 
@@ -35,7 +38,10 @@ export const requestRevision = async (req, res) => {
     const booking = await requestRevisionService(req.params.id, req.user.id, req.body);
     res.status(200).json({ success: true, message: 'Revision requested', data: booking });
   } catch (error) {
-    res.status(error.message === 'Not authorized' ? 403 : 500).json({ success: false, message: error.message });
+    let status = 500;
+    if (error.message.includes('not found')) status = 404;
+    else if (error.message === 'Not authorized') status = 403;
+    res.status(status).json({ success: false, message: error.message });
   }
 };
 
@@ -44,7 +50,10 @@ export const raiseDispute = async (req, res) => {
     const booking = await raiseDisputeService(req.params.id, req.user.id, req.body);
     res.status(200).json({ success: true, message: 'Dispute raised successfully', data: booking });
   } catch (error) {
-    res.status(error.message === 'Not authorized' ? 403 : 500).json({ success: false, message: error.message });
+    let status = 500;
+    if (error.message.includes('not found')) status = 404;
+    else if (error.message === 'Not authorized') status = 403;
+    res.status(status).json({ success: false, message: error.message });
   }
 };
 
@@ -53,7 +62,7 @@ export const getBookings = async (req, res) => {
     const bookings = await getBookingsService(req.user);
     res.status(200).json({ success: true, data: bookings });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.message.includes('not found') ? 404 : 500).json({ success: false, message: error.message });
   }
 };
 
@@ -71,7 +80,10 @@ export const completeBooking = async (req, res) => {
     const booking = await completeBookingService(req.params.id, req.user.id, req.body);
     res.status(200).json({ success: true, message: 'Booking completed', data: booking });
   } catch (error) {
-    res.status(error.message.includes('providers can complete') ? 403 : 500).json({ success: false, message: error.message });
+    let status = 500;
+    if (error.message.includes('not found')) status = 404;
+    else if (error.message.includes('providers can complete')) status = 403;
+    res.status(status).json({ success: false, message: error.message });
   }
 };
 
@@ -89,6 +101,9 @@ export const submitComplaint = async (req, res) => {
     const result = await complainService(req.params.id, req.user.id, req.body);
     res.status(200).json({ success: true, message: result.message });
   } catch (error) {
-    res.status(error.message.includes('Only clients') ? 403 : 500).json({ success: false, message: error.message });
+    let status = 500;
+    if (error.message.includes('not found')) status = 404;
+    else if (error.message.includes('Only clients')) status = 403;
+    res.status(status).json({ success: false, message: error.message });
   }
 };
