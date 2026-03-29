@@ -263,3 +263,46 @@ export const rejectCompletionService = async (bookingId, adminId, feedback) => {
 
     return booking;
 };
+
+export const getAdminProvidersMapService = async () => {
+    // We aggregate all users with role 'provider', pulling their services and categories
+    const providers = await User.aggregate([
+        { $match: { role: 'provider' } },
+        {
+            $lookup: {
+                from: 'services',
+                localField: '_id',
+                foreignField: 'providerId',
+                as: 'services'
+            }
+        },
+        // We can just populate service category locally using $lookup
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'services.categoryId',
+                foreignField: '_id',
+                as: 'serviceCategories'
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                email: 1,
+                profilePicture: 1,
+                status: 1,
+                isVerified: 1,
+                isApproved: 1,
+                availability: 1,
+                workingHours: 1,
+                location: 1,
+                createdAt: 1,
+                categories: '$serviceCategories.name',
+                serviceTypes: '$services.serviceType'
+            }
+        }
+    ]);
+    
+    return providers;
+};

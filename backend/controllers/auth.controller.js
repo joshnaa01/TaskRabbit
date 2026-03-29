@@ -136,10 +136,23 @@ export const updateProfile = async (req, res) => {
     if (profilePicture) user.profilePicture = profilePicture;
 
     if (user.role === 'provider' && lat && lng) {
-      user.location = {
+      const newLoc = {
         type: 'Point',
         coordinates: [parseFloat(lng), parseFloat(lat)]
       };
+      
+      user.location = newLoc;
+      
+      // Sync to all of provider's services automatically so everything reflects
+      try {
+        const Service = (await import('../models/Service.js')).default;
+        await Service.updateMany(
+            { providerId: user._id },
+            { $set: { location: newLoc } }
+        );
+      } catch (e) {
+        console.error("Failed to sync service locations", e);
+      }
     }
 
     await user.save();

@@ -113,10 +113,10 @@ export const getServicesNearby = async (req, res) => {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
 
-    // 2. Radius Constraints (1km - 100km)
+    // 2. Radius Constraints (1km - 20000km)
     let searchRadiusKm = parseFloat(radius);
     if (!searchRadiusKm || searchRadiusKm < 1) searchRadiusKm = 10;
-    if (searchRadiusKm > 100) searchRadiusKm = 100;
+    if (searchRadiusKm > 20000) searchRadiusKm = 20000;
 
     const radiusInMeters = searchRadiusKm * 1000;
 
@@ -128,7 +128,7 @@ export const getServicesNearby = async (req, res) => {
           distanceField: 'distance',
           maxDistance: radiusInMeters,
           spherical: true,
-          query: { role: 'provider', isVerified: true }
+          query: { role: 'provider', isApproved: true, status: 'active' }
         }
       },
       {
@@ -137,6 +137,20 @@ export const getServicesNearby = async (req, res) => {
           localField: '_id',
           foreignField: 'providerId',
           as: 'providerServices'
+        }
+      },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'providerId',
+          as: 'providerReviews'
+        }
+      },
+      {
+        $addFields: {
+          calcRating: { $ifNull: [{ $avg: '$providerReviews.rating' }, 0] },
+          calcReviewCount: { $size: '$providerReviews' }
         }
       },
       { $unwind: '$providerServices' },
@@ -162,11 +176,15 @@ export const getServicesNearby = async (req, res) => {
           description: '$providerServices.description',
           images: '$providerServices.images',
           serviceType: '$providerServices.serviceType',
+          categoryId: '$providerServices.categoryId',
           distance: { $round: [{ $divide: ['$distance', 1000] }, 1] }, // Convert to km, 1 decimal
           provider: {
             id: '$_id',
             name: '$name',
-            profilePicture: '$profilePicture'
+            profilePicture: '$profilePicture',
+            location: '$location',
+            rating: { $round: ['$calcRating', 1] },
+            reviewCount: '$calcReviewCount'
           }
         }
       },
@@ -189,8 +207,17 @@ export const getServicesNearby = async (req, res) => {
     }
 
     const remoteResults = await Service.find(remoteQuery)
-      .populate('providerId', 'name profilePicture')
+      .populate('providerId', 'name profilePicture location')
       .lean();
+
+    // Fetch reviews for remote providers to maintain consistency
+    const providerIds = remoteResults.map(s => s.providerId?._id).filter(Boolean);
+    const remoteReviews = await mongoose.model('Review').aggregate([
+      { $match: { providerId: { $in: providerIds } } },
+      { $group: { _id: '$providerId', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
+    ]);
+    const reviewMap = {};
+    remoteReviews.forEach(r => { reviewMap[r._id.toString()] = r; });
 
     const formattedRemote = remoteResults.map(s => ({
       _id: s._id,
@@ -199,11 +226,15 @@ export const getServicesNearby = async (req, res) => {
       description: s.description,
       images: s.images,
       serviceType: s.serviceType,
+      categoryId: s.categoryId,
       distance: null,
       provider: {
         id: s.providerId?._id,
         name: s.providerId?.name,
-        profilePicture: s.providerId?.profilePicture
+        profilePicture: s.providerId?.profilePicture,
+        location: s.providerId?.location,
+        rating: reviewMap[s.providerId?._id?.toString()]?.avgRating ? Math.round(reviewMap[s.providerId?._id?.toString()].avgRating * 10) / 10 : 0,
+        reviewCount: reviewMap[s.providerId?._id?.toString()]?.count || 0
       }
     }));
 

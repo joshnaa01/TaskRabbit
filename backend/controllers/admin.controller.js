@@ -7,7 +7,8 @@ import {
   sendEmailService,
   getPendingReviewBookingsService,
   approveCompletionService,
-  rejectCompletionService
+  rejectCompletionService,
+  getAdminProvidersMapService
 } from '../services/admin.service.js';
 
 export const getAdminStats = async (req, res) => {
@@ -99,5 +100,15 @@ export const rejectCompletion = async (req, res) => {
     res.status(200).json({ success: true, message: 'Completion rejected, provider notified', data: booking });
   } catch (error) {
     res.status(error.message.includes('not found') ? 404 : 400).json({ success: false, message: error.message });
+  }
+};
+
+// Admin: Get specific providers spatial data for Map View
+export const getAdminProvidersMap = async (req, res) => {
+  try {
+    const data = await getAdminProvidersMapService();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
