@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+/* Leaflet Map UI Tweaks */
+.leaflet-popup-content-wrapper {
+  border-radius: 20px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  padding: 0 !important;
+  border: 1px solid #f1f5f9 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  font-family: inherit !important;
+}
+
+.leaflet-popup-tip-container {
+  overflow: visible !important;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-container {
+  font-family: 'Inter', system-ui, sans-serif !important;
+}

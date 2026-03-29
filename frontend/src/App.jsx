@@ -15,6 +15,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import HowItWorks from './pages/public/HowItWorks';
 import Contact from './pages/public/Contact';
+import NearbyTechnicians from './pages/public/NearbyTechnicians';
 
 // Dashboard Pages
 import DashboardOverview from './pages/dashboard/DashboardOverview';
@@ -29,6 +30,7 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminUsers from './pages/dashboard/AdminUsers';
 import AdminDisputes from './pages/dashboard/AdminDisputes';
 import AdminCompletionReviews from './pages/dashboard/AdminCompletionReviews';
+import AdminMap from './pages/dashboard/AdminMap';
 
 // Role-based Route Protection
 const ProtectedRoute = ({ children }) => {
@@ -59,12 +61,12 @@ const DynamicLayout = ({ children }) => {
 
 // Route components for redirection
 const DashboardRedirect = () => {
-    const { user, loading } = useAuth();
-    if (loading) return <div>Loading...</div>;
-    if (!user) return <Navigate to="/login" replace />;
-    if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
-    if (user.role === 'provider') return <Navigate to="/provider/dashboard" replace />;
-    return <Navigate to="/client/dashboard" replace />;
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  if (user.role === 'provider') return <Navigate to="/provider/dashboard" replace />;
+  return <Navigate to="/client/dashboard" replace />;
 };
 
 function App() {
@@ -80,7 +82,7 @@ function App() {
             <Route path="/search" element={<PublicLayout noContainer><SearchPage /></PublicLayout>} />
             <Route path="/service/:id" element={<PublicLayout noContainer><ServiceDetails /></PublicLayout>} />
             <Route path="/how-it-works" element={<PublicLayout noContainer><HowItWorks /></PublicLayout>} />
-            <Route path="/nearby" element={<Navigate to="/search" replace />} />
+            <Route path="/nearby" element={<PublicLayout noContainer><NearbyTechnicians /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout noContainer><Contact /></PublicLayout>} />
 
             {/* GUEST ONLY */}
@@ -107,8 +109,8 @@ function App() {
             <Route path="/provider/earnings" element={
               <RoleRoute roles={['provider']}><DashboardLayout>
                 <div className="p-20 text-center flex flex-col items-center">
-                   <p className="text-4xl font-black text-slate-900 tracking-tight mb-4">Financial Command</p>
-                   <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Ledger reconciliation active</p>
+                  <p className="text-4xl font-black text-slate-900 tracking-tight mb-4">Financial Command</p>
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Ledger reconciliation active</p>
                 </div>
               </DashboardLayout></RoleRoute>
             } />
@@ -122,6 +124,7 @@ function App() {
             <Route path="/admin/disputes" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminDisputes /></DashboardLayout></RoleRoute>} />
             <Route path="/admin/verification-queue" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminCompletionReviews /></DashboardLayout></RoleRoute>} />
             <Route path="/admin/payments" element={<RoleRoute roles={['admin']}><DashboardLayout><PaymentsTable /></DashboardLayout></RoleRoute>} />
+            <Route path="/admin/map" element={<RoleRoute roles={['admin']}><DashboardLayout><AdminMap /></DashboardLayout></RoleRoute>} />
 
             {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />

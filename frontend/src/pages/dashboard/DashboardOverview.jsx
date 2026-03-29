@@ -9,11 +9,34 @@ import {
   CheckCircle2,
   TrendingUp,
   CreditCard,
-  Target
+  Target,
+  MapPin
 } from 'lucide-react';
+import { useLocation } from '../../context/LocationContext';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet marker icons issue in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+const userIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 const DashboardOverview = () => {
     const { user } = useAuth();
+    const { coords, error: geoError } = useLocation();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -29,7 +52,27 @@ const DashboardOverview = () => {
             }
         };
         fetchBookings();
-    }, []);
+
+        // Automatically sync provider's live geolocation
+        if (user?.role === 'provider' && navigator.geolocation) {
+             navigator.geolocation.getCurrentPosition(
+                 async (position) => {
+                     try {
+                         await api.put('/auth/profile', {
+                             lat: position.coords.latitude,
+                             lng: position.coords.longitude
+                         });
+                         console.log("Location auto-synced successfully");
+                     } catch (err) {
+                         console.error("Auto-sync location failed");
+                     }
+                 },
+                 (error) => {
+                     console.log("Auto-location access denied or unavailable", error);
+                 }
+             );
+        }
+    }, [user]);
 
     const activeBookings = bookings.filter(b => b.status === 'Accepted' || b.status === 'In Progress').length;
     const completedBookings = bookings.filter(b => b.status === 'Completed').length;
@@ -129,6 +172,62 @@ const DashboardOverview = () => {
                      </div>
                   </div>
                </div>
+            </div>
+
+            {/* Live Location Module */}
+            <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-blue-900/5 overflow-hidden flex flex-col md:flex-row h-auto md:h-96">
+                <div className="p-10 flex flex-col justify-center md:w-1/3 bg-slate-50 border-r border-slate-100">
+                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 ring-8 ring-white shadow-sm">
+                        <MapPin className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Live Geolocation</h3>
+                    <p className="text-slate-500 text-sm font-medium mb-6">
+                        {user?.role === 'provider' 
+                            ? 'Your live location is actively syncing over our secure network to display to nearby clients on their radar.'
+                            : 'This is your active staging point. Technicians use this coordinate marker to accurately locate your required service area.'}
+                    </p>
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</p>
+                        {coords ? (
+                            <p className="text-sm font-black text-emerald-600 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Tracking Active
+                            </p>
+                        ) : geoError ? (
+                            <p className="text-sm font-black text-red-500">Location Access Denied</p>
+                        ) : (
+                            <p className="text-sm font-black text-slate-600">Acquiring Satellites...</p>
+                        )}
+                    </div>
+                </div>
+                <div className="flex-1 relative bg-slate-100 h-64 md:h-auto min-h-[300px]">
+                    {coords ? (
+                        <MapContainer 
+                            center={[coords.lat, coords.lng]} 
+                            zoom={15} 
+                            scrollWheelZoom={false} 
+                            className="h-full w-full outline-none z-0"
+                        >
+                            <TileLayer
+                                attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                            />
+                            <Marker position={[coords.lat, coords.lng]} icon={userIcon}>
+                                <Popup className="font-sans">
+                                    <div className="text-center p-1">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            Your Current Hub
+                                        </span>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        </MapContainer>
+                    ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-80 mix-blend-multiply">
+                            <MapPin className="w-10 h-10 mb-4 opacity-50" />
+                            <p className="font-bold text-xs uppercase tracking-widest">Awaiting Signal...</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

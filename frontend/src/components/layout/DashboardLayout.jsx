@@ -22,7 +22,8 @@ import {
   Users,
   X,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Map as MapIcon
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import Header from './Header';
@@ -94,6 +95,7 @@ const DashboardLayout = ({ children }) => {
       { label: 'Verification Queue', icon: CheckCircle2, path: '/admin/verification-queue' },
       { label: 'Secure Payments', icon: CreditCard, path: '/admin/payments' },
       { label: 'Dispute Console', icon: AlertCircle, path: '/admin/disputes' },
+      { label: 'Network Map', icon: MapIcon, path: '/admin/map' },
     ];
 
     switch (user?.role) {

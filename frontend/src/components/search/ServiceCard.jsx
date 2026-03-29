@@ -37,10 +37,15 @@ const ServiceCard = ({ service }) => {
 
       {/* Content Area */}
       <div className="p-6 flex-1 flex flex-col">
-         <div className="flex items-center gap-2 mb-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-            <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-            <span className="text-slate-900">4.9</span>
-            <span className="opacity-50">• 84 ratings</span>
+         <div className="flex items-center justify-between mb-2">
+           <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+              <span className="text-slate-900">{service.provider?.rating || 'New'}</span>
+              <span className="opacity-50">• {service.provider?.reviewCount || 0} reviews</span>
+           </div>
+           <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest truncate max-w-[120px]" title={service.provider?.name}>
+             By {service.provider?.name || 'Pro'}
+           </span>
          </div>
          
          <Link to={`/service/${service._id}`}>

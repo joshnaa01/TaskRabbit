@@ -78,7 +78,7 @@ const Header = () => {
                     {/* Navigation Links */}
                     <nav className="hidden lg:flex items-center gap-10 mx-auto">
                         <Link to="/search" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/search' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Discovery</Link>
-                        <Link to="/nearby" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/nearby' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Local Search</Link>
+                        <Link to="/nearby" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/nearby' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Map Search</Link>
                         <Link to="/how-it-works" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/how-it-works' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>How It Works</Link>
                     </nav>
 
@@ -209,7 +209,7 @@ const Header = () => {
                     <div className="fixed inset-0 top-20 bg-white/95 backdrop-blur-xl z-[90] animate-in fade-in slide-in-from-top duration-300 lg:hidden px-8 py-12">
                         <nav className="flex flex-col gap-10 text-center">
                             <Link onClick={() => setIsMenuOpen(false)} to="/search" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Marketplace</Link>
-                            <Link onClick={() => setIsMenuOpen(false)} to="/nearby" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Nearby</Link>
+                            <Link onClick={() => setIsMenuOpen(false)} to="/nearby" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Map Search</Link>
                             <Link onClick={() => setIsMenuOpen(false)} to="/how-it-works" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Methodology</Link>
 
                             {!user && (
