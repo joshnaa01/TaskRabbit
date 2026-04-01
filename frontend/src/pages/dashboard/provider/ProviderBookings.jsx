@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import EvidenceModal from '../../../components/dashboard/EvidenceModal';
 
 const STATUS_PRIORITY = { 'Pending': 0, 'Accepted': 1, 'In Progress': 2, 'Pending Review': 3, 'Completed': 4, 'Rejected': 5, 'Cancelled': 6 };
+const ITEMS_PER_PAGE = 8;
 
 const ProviderBookings = () => {
     const { user } = useAuth();
@@ -41,6 +42,7 @@ const ProviderBookings = () => {
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [actionLoading, setActionLoading] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchBookings = useCallback(async () => {
         try {
@@ -72,23 +74,23 @@ const ProviderBookings = () => {
             switch (action) {
                 case 'accept':
                     await api.put(`/bookings/${bookingId}/status`, { status: 'Accepted' });
-                    toast.success('Task Sequence Initiated.');
+                    toast.success('Booking accepted.');
                     break;
                 case 'reject':
                     const reason = prompt('Reason for rejection:');
                     if (!reason) return;
                     await api.put(`/bookings/${bookingId}/status`, { status: 'Rejected', rejectionReason: reason });
-                    toast.error('Task rejected.');
+                    toast.error('Booking rejected.');
                     break;
                 case 'submitWork':
-                    await api.post(`/bookings/${bookingId}/deliverables`, extraData);
-                    toast.success('Work artifacts archived for verification.');
+                    await api.patch(`/bookings/${bookingId}/deliverables`, extraData);
+                    toast.success('Work submitted for review.');
                     setIsEvidenceOpen(false);
                     setExpandedBooking(null);
                     break;
                 case 'complete':
-                    await api.post(`/bookings/${bookingId}/complete`, extraData);
-                    toast.success('Project cycle finalized.');
+                    await api.patch(`/bookings/${bookingId}/complete`, extraData);
+                    toast.success('Job completed.');
                     setIsEvidenceOpen(false);
                     setExpandedBooking(null);
                     break;
@@ -116,27 +118,27 @@ const ProviderBookings = () => {
     if (loading) return (
       <div className="flex flex-col items-center justify-center h-96 gap-6">
         <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Syncing Operational Pipeline...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading your jobs...</p>
       </div>
     );
 
     return (
         <div className="flex flex-col gap-10">
             <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight">Project Matrix</h1>
-                <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2 tracking-[0.2em]">Manage incoming inquiries and monitor production cycles</p>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">My Bookings</h1>
+                <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2 tracking-[0.2em]">Manage your requests and active jobs</p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
                 {[
-                    { key: 'all', label: 'Entire Queue' },
-                    { key: 'Pending', label: 'Received' },
-                    { key: 'Accepted', label: 'Production' },
-                    { key: 'Completed', label: 'Finalized' },
+                    { key: 'all', label: 'All Jobs' },
+                    { key: 'Pending', label: 'New Requests' },
+                    { key: 'Accepted', label: 'Active' },
+                    { key: 'Completed', label: 'Done' },
                 ].map(tab => (
                     <button
                         key={tab.key}
-                        onClick={() => setActiveFilter(tab.key)}
+                        onClick={() => { setActiveFilter(tab.key); setCurrentPage(1); }}
                         className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                             activeFilter === tab.key ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
                         }`}
@@ -150,13 +152,16 @@ const ProviderBookings = () => {
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                     <thead>
                         <tr className="bg-slate-50/50">
-                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Project Artifact</th>
-                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Lifecycle</th>
-                            <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Operational Command</th>
+                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service Details</th>
+                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                            <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100/50">
-                        {sortedBookings.map((booking) => (
+                        {(() => {
+                            const totalPages = Math.ceil(sortedBookings.length / ITEMS_PER_PAGE);
+                            const paginatedBookings = sortedBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+                            return paginatedBookings.map((booking) => (
                             <React.Fragment key={booking._id}>
                                 <tr className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => setExpandedBooking(expandedBooking === booking._id ? null : booking._id)}>
                                     <td className="px-10 py-10">
@@ -165,7 +170,7 @@ const ProviderBookings = () => {
                                                 {booking.serviceId?.serviceType === 'remote' ? <Terminal className="w-7 h-7" /> : <MapPin className="w-7 h-7" />}
                                             </div>
                                             <div>
-                                                <p className="font-black text-slate-900 text-lg mb-1">{booking.serviceId?.title || 'Custom Engagement'}</p>
+                                                <p className="font-black text-slate-900 text-lg mb-1">{booking.serviceId?.title || 'Service'}</p>
                                                 <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">Client: <span className="text-slate-900 font-black">{booking.clientId?.name}</span></p>
                                             </div>
                                         </div>
@@ -185,13 +190,13 @@ const ProviderBookings = () => {
                                                     onClick={(e) => { e.stopPropagation(); handleAction('accept', booking._id); }}
                                                     className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 shadow-xl shadow-emerald-500/10 transition-all"
                                                 >
-                                                    Authorize
+                                                    Accept
                                                 </button>
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleAction('reject', booking._id); }}
                                                     className="px-6 py-3 bg-white border border-slate-100 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-red-600 hover:border-red-100 transition-all"
                                                 >
-                                                    Dismiss
+                                                    Reject
                                                 </button>
                                             </div>
                                         ) : booking.status === 'Accepted' ? (
@@ -199,11 +204,11 @@ const ProviderBookings = () => {
                                                 onClick={(e) => { e.stopPropagation(); setSelectedBookingId(booking._id); setIsEvidenceOpen(true); }}
                                                 className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-900/10 transition-all"
                                             >
-                                                Fulfill Artifact
+                                                Submit Work
                                             </button>
                                         ) : (
                                             <div className="flex items-center justify-end gap-2 text-slate-300 font-black text-[10px] uppercase tracking-widest">
-                                                Registry Insight <ChevronDown className={`w-4 h-4 transition-transform ${expandedBooking === booking._id ? 'rotate-180' : ''}`} />
+                                                View Details <ChevronDown className={`w-4 h-4 transition-transform ${expandedBooking === booking._id ? 'rotate-180' : ''}`} />
                                             </div>
                                         )}
                                     </td>
@@ -214,16 +219,16 @@ const ProviderBookings = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-in fade-in slide-in-from-top duration-500">
                                                 <div className="space-y-6">
                                                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                                        <FileText className="w-4 h-4 text-blue-600" /> Executive Brief
+                                                        <FileText className="w-4 h-4 text-blue-600" /> Requirements
                                                     </h4>
                                                     <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-blue-900/5">
-                                                        <p className="text-sm font-medium text-slate-600 leading-relaxed">{booking.requirements?.description || 'No direct instructions archived.'}</p>
+                                                        <p className="text-sm font-medium text-slate-600 leading-relaxed">{booking.requirements?.description || 'No description provided.'}</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-6">
                                                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                                        <UploadCloud className="w-4 h-4 text-emerald-600" /> Evidence Logs
+                                                        <UploadCloud className="w-4 h-4 text-emerald-600" /> Submitted Work
                                                     </h4>
                                                     <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-blue-900/5">
                                                         {booking.deliverables?.files?.length > 0 ? (
@@ -240,7 +245,7 @@ const ProviderBookings = () => {
                                                         ) : (
                                                             <div className="py-10 text-center opacity-30">
                                                                 <Activity className="w-10 h-10 mx-auto mb-4" />
-                                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Production In Progress</p>
+                                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Work in progress</p>
                                                             </div>
                                                         )}
                                                     </div>
@@ -250,10 +255,53 @@ const ProviderBookings = () => {
                                     </tr>
                                 )}
                             </React.Fragment>
-                        ))}
+                        ));
+                        })()}
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination */}
+            {(() => {
+                const totalPages = Math.ceil(sortedBookings.length / ITEMS_PER_PAGE);
+                if (totalPages <= 1) return null;
+                return (
+                    <div className="flex items-center justify-between px-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, sortedBookings.length)} of {sortedBookings.length}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                Previous
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
+                                        currentPage === page 
+                                            ? 'bg-slate-900 text-white shadow-lg' 
+                                            : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                );
+            })()}
 
             <EvidenceModal 
                 isOpen={isEvidenceOpen}

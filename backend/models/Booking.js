@@ -30,6 +30,9 @@ const BookingSchema = new mongoose.Schema({
 
   basePrice: { type: Number },
   finalPrice: { type: Number },
+  commissionProvider: { type: Number, default: 0 }, // 70%
+  commissionAdmin: { type: Number, default: 0 },    // 30%
+  commissionPercentage: { type: Number, default: 30 }, 
   paid: { type: Boolean, default: false },
   khaltiTransactionId: { type: String },
   stripePaymentIntentId: { type: String },

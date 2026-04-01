@@ -162,6 +162,7 @@ export const getServicesNearby = async (req, res) => {
           ...(maxPrice && { 'providerServices.price': { $lte: Number(maxPrice) } }),
           ...(keyword && {
             $or: [
+              { 'name': { $regex: keyword, $options: 'i' } },
               { 'providerServices.title': { $regex: keyword, $options: 'i' } },
               { 'providerServices.description': { $regex: keyword, $options: 'i' } }
             ]

@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import Header from './Header';
+import NotificationModal from '../dashboard/NotificationModal';
+import ProfileModal from '../dashboard/ProfileModal';
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -37,24 +39,38 @@ const DashboardLayout = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotif, setShowNotif] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchNotifs = async () => {
+    const fetchData = async () => {
       try {
+        // Notifications
         const res = await api.get('/notifications/my');
         setNotifications(res.data.data);
         setUnreadCount(res.data.unreadCount);
+
+        // Messages (Aggregate unread for badge)
+        const chatRes = await api.get('/chat/conversations');
+        const unreadMsg = (chatRes.data.data || []).reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
+        setUnreadMessages(unreadMsg);
+
+        // Admin Queue
+        if (user?.role === 'admin') {
+           const reviewRes = await api.get('/admin/completion-reviews');
+           setPendingReviewsCount(reviewRes.data.data?.length || 0);
+        }
       } catch (err) {
         if (err.response?.status === 401) {
           logout();
           navigate('/login');
         }
-        console.error("Notifications fetch failure");
       }
     };
     if (user) {
-        fetchNotifs();
-        const interval = setInterval(fetchNotifs, 30000);
+        fetchData();
+        const interval = setInterval(fetchData, 15000); // 15s polling for high-velocity hub
         return () => clearInterval(interval);
     }
   }, [user]);
@@ -80,6 +96,7 @@ const DashboardLayout = ({ children }) => {
     ];
 
     const clientItems = [
+      { label: 'Map Discovery', icon: MapIcon, path: '/nearby' },
       { label: 'Payments', icon: CreditCard, path: '/client/payments' },
     ];
 
@@ -116,25 +133,44 @@ const DashboardLayout = ({ children }) => {
 
            {/* Dashboard Sub-Nav for Clients */}
            <div className="fixed top-20 inset-x-0 h-14 bg-white/40 backdrop-blur-xl border-b border-slate-100/50 z-40 flex items-center shadow-sm">
-              <div className="max-w-7xl mx-auto px-8 w-full flex items-center gap-10">
-                 {navItems.map((item) => {
-                    const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
-                    return (
-                       <Link 
-                          key={item.label} 
-                          to={item.path} 
-                          className={`text-[9px] font-black uppercase tracking-[0.25em] transition-all relative py-2 flex items-center gap-2 group
-                             ${isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}
-                          `}
-                       >
-                          <span>{item.label}</span>
-                          {isActive && (
-                             <span className="w-1 h-1 rounded-full bg-blue-600 animate-in fade-in zoom-in duration-300" />
-                          )}
-                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transition-all duration-300 transform scale-x-0 group-hover:scale-x-100 ${isActive ? 'scale-x-100 opacity-0' : 'opacity-0'}`} />
-                       </Link>
-                    );
-                 })}
+              <div className="max-w-7xl mx-auto px-8 w-full flex items-center justify-between">
+                 <div className="flex items-center gap-10">
+                    {navItems.map((item) => {
+                       const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+                       const hasBadge = (item.label === 'Messages' && unreadMessages > 0);
+                       return (
+                          <Link 
+                             key={item.label} 
+                             to={item.path} 
+                             className={`text-[9px] font-black uppercase tracking-[0.25em] transition-all relative py-2 flex items-center gap-2 group
+                                ${isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}
+                             `}
+                          >
+                             <span>{item.label}</span>
+                             {hasBadge && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                             )}
+                             {isActive && !hasBadge && (
+                                <span className="w-1 h-1 rounded-full bg-blue-600 animate-in fade-in zoom-in duration-300" />
+                             )}
+                             <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transition-all duration-300 transform scale-x-0 group-hover:scale-x-100 ${isActive ? 'scale-x-100 opacity-0' : 'opacity-0'}`} />
+                          </Link>
+                       );
+                    })}
+                 </div>
+
+                 {/* Notification Bell for Client Sub-Nav */}
+                 <button
+                    onClick={() => setShowNotif(!showNotif)}
+                    className="relative p-2.5 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50/50 rounded-xl border border-transparent hover:border-blue-100 active:scale-95"
+                 >
+                    <Bell className="w-4 h-4" />
+                    {unreadCount > 0 && (
+                       <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 border-2 border-white rounded-full flex items-center justify-center text-[7px] font-black text-white">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                       </span>
+                    )}
+                 </button>
               </div>
            </div>
 
@@ -158,32 +194,23 @@ const DashboardLayout = ({ children }) => {
               </div>
            </main>
 
-           {/* Notification Modal for Client Topnav */}
-           {showNotif && (
-              <div className="fixed inset-0 z-[60] flex items-center justify-center md:items-start md:justify-end md:p-8 md:pt-24 pointer-events-none">
-                 <div className="pointer-events-auto w-full max-w-sm bg-white rounded-[32px] shadow-2xl border border-slate-100 py-6 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                    <div className="px-6 mb-4 flex items-center justify-between border-b border-slate-50 pb-4">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Notifications</p>
-                       <button onClick={() => setShowNotif(false)}><X className="w-4 h-4 text-slate-400" /></button>
-                    </div>
-                    <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
-                       {notifications.length > 0 ? notifications.map((n) => (
-                          <div key={n._id} className="px-6 py-4 hover:bg-slate-50 transition-colors cursor-pointer group">
-                             <p className="text-xs font-black text-slate-900 mb-1 group-hover:text-blue-600">{n.title}</p>
-                             <p className="text-[11px] font-bold text-slate-500 leading-relaxed line-clamp-2">{n.message}</p>
-                             <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mt-2">{new Date(n.createdAt).toLocaleDateString()}</p>
-                          </div>
-                       )) : (
-                          <div className="py-12 text-center text-slate-100">
-                             <Zap className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                             <p className="text-[9px] font-black uppercase tracking-widest">No alerts recorded</p>
-                          </div>
-                       )}
-                    </div>
-                 </div>
-                 <div className="fixed inset-0 bg-slate-900/5 backdrop-blur-[2px] -z-10 pointer-events-auto" onClick={() => setShowNotif(false)} />
-              </div>
-           )}
+           {/* Client Notification Modal */}
+           <NotificationModal 
+               isOpen={showNotif} 
+               onClose={() => setShowNotif(false)} 
+               notifications={notifications}
+               onMarkRead={async () => {
+                   await markRead();
+                   const res = await api.get('/notifications/my');
+                   setNotifications(res.data.data);
+                   setUnreadCount(res.data.unreadCount);
+               }}
+               onRefresh={async () => {
+                   const res = await api.get('/notifications/my');
+                   setNotifications(res.data.data);
+                   setUnreadCount(res.data.unreadCount);
+               }}
+           />
         </div>
      );
   }
@@ -222,7 +249,7 @@ const DashboardLayout = ({ children }) => {
                       to={item.path}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`
-                        flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group
+                        flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group relative
                         ${isActive 
                            ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20' 
                            : isClient 
@@ -232,6 +259,9 @@ const DashboardLayout = ({ children }) => {
                     >
                       <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'group-hover:text-blue-600 transition-colors'}`} />
                       <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
+                      {((item.label === 'Messages' && unreadMessages > 0) || (item.label === 'Verification Queue' && pendingReviewsCount > 0)) && (
+                         <span className="absolute top-3 right-4 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                      )}
                     </Link>
                   );
                })}
@@ -239,18 +269,26 @@ const DashboardLayout = ({ children }) => {
 
             {/* Account area */}
             <div className={`p-4 border-t ${user?.role === 'client' ? 'border-slate-100 bg-slate-50' : 'border-white/5 bg-black/20'}`}>
-                <div className="flex items-center gap-3 px-4 py-3">
-                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${user?.role === 'client' ? 'bg-white text-slate-400 border border-slate-100' : 'bg-slate-800 text-slate-400'}`}>
-                      <User className="w-5 h-5" />
+                <button 
+                   onClick={() => setIsProfileModalOpen(true)}
+                   className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/5 transition-all group"
+                >
+                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${user?.role === 'client' ? 'bg-white text-slate-400 border border-slate-100' : 'bg-slate-800 text-slate-400'} overflow-hidden`}>
+                      {user?.profilePicture ? (
+                         <img src={user.profilePicture} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                         <User className="w-5 h-5" />
+                      )}
                    </div>
-                   <div className="min-w-0">
+                   <div className="min-w-0 text-left">
                       <p className={`text-xs font-black truncate ${user?.role === 'client' ? 'text-slate-900' : 'text-white'}`}>{user?.name}</p>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{user?.role}</p>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">Edit Profile</p>
                    </div>
-                   <button onClick={handleLogout} className="ml-auto p-2 text-slate-500 hover:text-red-400 transition-colors">
-                      <LogOut className="w-4 h-4" />
-                   </button>
-                </div>
+                </button>
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 mt-1 rounded-2xl text-slate-500 hover:text-red-400 transition-colors hover:bg-white/5">
+                   <LogOut className="w-4 h-4" />
+                   <span className="text-xs font-black uppercase tracking-widest">Sign Out</span>
+                </button>
             </div>
         </div>
       </aside>
@@ -299,31 +337,18 @@ const DashboardLayout = ({ children }) => {
                      )}
                   </Button>
 
-                  {showNotif && (
-                     <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowNotif(false)}></div>
-                        <div className="absolute top-14 right-0 w-80 bg-white rounded-[32px] shadow-2xl shadow-blue-900/20 border border-slate-100 py-6 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-                            <div className="px-6 mb-4 flex items-center justify-between">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Notifications</p>
-                            <span className="text-[8px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full">{notifications.length} Total</span>
-                            </div>
-                            <div className="max-h-96 overflow-y-auto space-y-1">
-                            {notifications.length > 0 ? notifications.map((n) => (
-                                <div key={n._id} className="px-6 py-4 hover:bg-slate-50 transition-colors cursor-pointer group">
-                                    <p className="text-xs font-black text-slate-900 mb-1 group-hover:text-blue-600">{n.title}</p>
-                                    <p className="text-[11px] font-bold text-slate-500 leading-relaxed line-clamp-2">{n.message}</p>
-                                    <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mt-2">{new Date(n.createdAt).toLocaleDateString()}</p>
-                                </div>
-                            )) : (
-                                <div className="py-12 text-center text-slate-300">
-                                    <Zap className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                    <p className="text-[9px] font-black uppercase tracking-widest">No alerts recorded</p>
-                                </div>
-                            )}
-                            </div>
-                        </div>
-                     </>
-                  )}
+                  <NotificationModal 
+                    isOpen={showNotif} 
+                    onClose={() => setShowNotif(false)} 
+                    notifications={notifications}
+                    onMarkRead={markRead}
+                    onRefresh={() => {
+                        api.get('/notifications/my').then(res => {
+                            setNotifications(res.data.data);
+                            setUnreadCount(res.data.unreadCount);
+                        });
+                    }}
+                  />
                </div>
 
                <Button variant="ghost" size="icon" className="rounded-full">
@@ -338,6 +363,12 @@ const DashboardLayout = ({ children }) => {
             </div>
          </main>
       </div>
+
+      {/* Profile Modal for Provider/Admin */}
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </div>
   );
 };

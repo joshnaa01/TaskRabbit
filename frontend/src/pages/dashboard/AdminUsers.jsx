@@ -17,6 +17,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminEmailModal from './AdminEmailModal';
+const ITEMS_PER_PAGE = 10;
 
 const AdminUsers = () => {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ const AdminUsers = () => {
     const [filterRole, setFilterRole] = useState('all');
     const [emailModal, setEmailModal] = useState({ open: false, target: 'all' });
     const [selectedUserIds, setSelectedUserIds] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchUsers = async () => {
         try {
@@ -118,8 +120,8 @@ const AdminUsers = () => {
         <div className="flex flex-col gap-10">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Identity Management</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Oversee Clients, Taskers, and Staff</p>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Users</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Manage clients, providers, and staff</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {selectedUserIds.length > 0 && (
@@ -149,10 +151,10 @@ const AdminUsers = () => {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Search identities by name or email..."
+                            placeholder="Search by name or email..."
                             className="w-full bg-white border border-slate-100 rounded-2xl py-3 pl-12 text-xs font-bold focus:ring-4 focus:ring-blue-600/10 placeholder:text-slate-400 transition-all outline-none"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                     </div>
 
@@ -182,15 +184,18 @@ const AdminUsers = () => {
                                         onChange={toggleAllSelection}
                                     />
                                 </th>
-                                <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Identity Record</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Authorization Check</th>
-                                <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Access Controls</th>
+                                <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">User</th>
+                                <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Verification</th>
+                                <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
-                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Running identity scan...</td></tr>
-                            ) : filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Loading users...</td></tr>
+                            ) : filteredUsers.length > 0 ? (() => {
+                                const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+                                const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+                                return paginatedUsers.map((user) => (
                                 <tr key={user._id} className={`group hover:bg-slate-50/50 transition-all ${selectedUserIds.includes(user._id) ? 'bg-blue-50/30' : ''}`}>
                                     <td className="px-10 py-8">
                                         <input 
@@ -262,18 +267,19 @@ const AdminUsers = () => {
                                             <button
                                                 onClick={() => handleDeleteUser(user._id)}
                                                 className="p-3.5 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all shadow-sm"
-                                                title="Destroy Account"
+                                                title="Delete Account"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
-                            )) : (
+                            ));
+                            })() : (
                                 <tr>
-                                    <td colSpan="3" className="px-10 py-32 text-center text-slate-400">
+                                    <td colSpan="4" className="px-10 py-32 text-center text-slate-400">
                                         <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                                        <p className="text-xs font-black uppercase tracking-widest">No Identities Match Filter</p>
+                                        <p className="text-xs font-black uppercase tracking-widest">No users found</p>
                                     </td>
                                 </tr>
                             )}
@@ -281,6 +287,49 @@ const AdminUsers = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {(() => {
+                const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+                if (totalPages <= 1 || filteredUsers.length === 0) return null;
+                return (
+                    <div className="flex items-center justify-between px-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                Previous
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
+                                        currentPage === page 
+                                            ? 'bg-slate-900 text-white shadow-lg' 
+                                            : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                );
+            })()}
+
             <AdminEmailModal
                 isOpen={emailModal.open}
                 onClose={() => setEmailModal({ ...emailModal, open: false })}
@@ -291,3 +340,4 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
+

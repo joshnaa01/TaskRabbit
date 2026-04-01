@@ -32,6 +32,8 @@ import ReviewModal from '../../../components/dashboard/ReviewModal';
 
 const STATUS_PRIORITY = { 'Pending': 0, 'Accepted': 1, 'Pending Review': 2, 'Completed': 3, 'In Progress': 4, 'Rejected': 5, 'Cancelled': 6 };
 
+const ITEMS_PER_PAGE = 8;
+
 const ClientBookings = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -43,6 +45,7 @@ const ClientBookings = () => {
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [actionLoading, setActionLoading] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchBookings = useCallback(async () => {
         try {
@@ -116,27 +119,30 @@ const ClientBookings = () => {
     if (loading) return (
       <div className="flex flex-col items-center justify-center h-96 gap-6">
         <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-blue-600/10"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Syncing Collaboration Feed...</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading your bookings...</p>
       </div>
     );
+
+    const totalPages = Math.ceil(sortedBookings.length / ITEMS_PER_PAGE);
+    const paginatedBookings = sortedBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
         <div className="flex flex-col gap-10">
             <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight">Active Collaborations</h1>
-                <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2 tracking-[0.2em]">Track your task lifecycle from initiation to final release</p>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">My Bookings</h1>
+                <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2 tracking-[0.2em]">Track and manage all your service requests</p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
                 {[
-                    { key: 'all', label: 'All Projects' },
-                    { key: 'Pending', label: 'Invitations' },
-                    { key: 'Accepted', label: 'Active Tasks' },
-                    { key: 'Completed', label: 'History' },
+                    { key: 'all', label: 'All' },
+                    { key: 'Pending', label: 'Pending' },
+                    { key: 'Accepted', label: 'Active' },
+                    { key: 'Completed', label: 'Done' },
                 ].map(tab => (
                     <button
                         key={tab.key}
-                        onClick={() => setActiveFilter(tab.key)}
+                        onClick={() => { setActiveFilter(tab.key); setCurrentPage(1); }}
                         className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                             activeFilter === tab.key ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
                         }`}
@@ -150,13 +156,13 @@ const ClientBookings = () => {
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                     <thead>
                         <tr className="bg-slate-50/50">
-                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service Context</th>
-                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Protocol Status</th>
-                            <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Workflow Action</th>
+                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service</th>
+                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                            <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100/50">
-                        {sortedBookings.map((booking) => (
+                        {paginatedBookings.map((booking) => (
                             <React.Fragment key={booking._id}>
                                 <tr className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => setExpandedBooking(expandedBooking === booking._id ? null : booking._id)}>
                                     <td className="px-10 py-10">
@@ -165,15 +171,15 @@ const ClientBookings = () => {
                                                 {booking.serviceId?.serviceType === 'remote' ? <Terminal className="w-7 h-7" /> : <MapPin className="w-7 h-7" />}
                                             </div>
                                             <div>
-                                                <p className="font-black text-slate-900 text-lg mb-1">{booking.serviceId?.title || 'Bespoke Inquiry'}</p>
-                                                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">Expert: <span className="text-slate-900 font-black">{booking.providerId?.name}</span></p>
+                                                <p className="font-black text-slate-900 text-lg mb-1">{booking.serviceId?.title || 'Service'}</p>
+                                                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">Provider: <span className="text-slate-900 font-black">{booking.providerId?.name}</span></p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-10 py-10">
                                         <div className="flex flex-col items-center gap-2">
                                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyles(booking.status, booking.paid)}`}>
-                                                {booking.status} {booking.status === 'Completed' && !booking.paid ? '• Payout Pending' : ''}
+                                                {booking.status} {booking.status === 'Completed' && !booking.paid ? '• Payment Due' : ''}
                                             </span>
                                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(booking.scheduleDate).toLocaleDateString()} • {booking.timeSlot?.start}</p>
                                         </div>
@@ -184,11 +190,11 @@ const ClientBookings = () => {
                                                 onClick={(e) => { e.stopPropagation(); handleAction('pay', booking._id); }}
                                                 className="px-6 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 shadow-xl shadow-blue-500/20 transition-all"
                                             >
-                                                Finalize Payment
+                                                Pay Now
                                             </button>
                                         ) : (
                                             <div className="flex items-center justify-end gap-2 text-slate-300 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-colors">
-                                                Inspection View <ChevronDown className={`w-4 h-4 transition-transform duration-500 ${expandedBooking === booking._id ? 'rotate-180' : ''}`} />
+                                                View Details <ChevronDown className={`w-4 h-4 transition-transform duration-500 ${expandedBooking === booking._id ? 'rotate-180' : ''}`} />
                                             </div>
                                         )}
                                     </td>
@@ -199,16 +205,16 @@ const ClientBookings = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-in fade-in slide-in-from-top duration-500">
                                                 <div className="space-y-6">
                                                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                                        <FileText className="w-4 h-4 text-blue-600" /> Interaction Brief
+                                                        <FileText className="w-4 h-4 text-blue-600" /> Requirements
                                                     </h4>
                                                     <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-blue-900/5">
-                                                        <p className="text-sm font-medium text-slate-600 leading-relaxed">{booking.requirements?.description || 'No direct instructions archived.'}</p>
+                                                        <p className="text-sm font-medium text-slate-600 leading-relaxed">{booking.requirements?.description || 'No description provided.'}</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="space-y-6">
                                                     <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                                        <UploadCloud className="w-4 h-4 text-emerald-600" /> Artifact Release & Appraisal
+                                                        <UploadCloud className="w-4 h-4 text-emerald-600" /> Work & Review
                                                     </h4>
                                                     <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-blue-900/5">
                                                         {booking.deliverables?.files?.length > 0 ? (
@@ -238,7 +244,7 @@ const ClientBookings = () => {
                                                                                 onClick={() => { setSelectedBookingId(booking._id); setIsReviewOpen(true); }}
                                                                                 className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all flex items-center justify-center gap-2"
                                                                             >
-                                                                                <Heart className="w-4 h-4" /> Record My Impression
+                                                                                <Heart className="w-4 h-4" /> Leave a Review
                                                                             </button>
                                                                         )}
                                                                     </div>
@@ -247,7 +253,7 @@ const ClientBookings = () => {
                                                         ) : (
                                                             <div className="py-10 text-center opacity-30">
                                                                 <UploadCloud className="w-10 h-10 mx-auto mb-4" />
-                                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Waiting for Deliverables</p>
+                                                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Work in progress</p>
                                                             </div>
                                                         )}
                                                     </div>
@@ -261,6 +267,44 @@ const ClientBookings = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, sortedBookings.length)} of {sortedBookings.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                            Previous
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
+                                    currentPage === page 
+                                        ? 'bg-slate-900 text-white shadow-lg' 
+                                        : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <ReviewModal 
                 isOpen={isReviewOpen}

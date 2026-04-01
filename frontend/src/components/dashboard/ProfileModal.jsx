@@ -91,8 +91,8 @@ const ProfileModal = ({ isOpen, onClose }) => {
                     </button>
 
                     <div className="mb-8 text-center">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Identity Hub</p>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Profile Assets</h2>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Your Profile</p>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Profile Photo</h2>
                     </div>
 
                     <div className="bg-white p-6 rounded-[32px] shadow-xl shadow-blue-900/5 mb-8 w-full">
@@ -138,7 +138,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
                     <div className="mt-auto pt-8 text-center text-slate-300">
                         <Shield className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p className="text-[8px] font-black uppercase tracking-widest">Vault Protected</p>
+                        <p className="text-[8px] font-black uppercase tracking-widest">Secure</p>
                     </div>
                 </div>
 
@@ -146,8 +146,8 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 <div className="flex-1 p-8 md:p-12 overflow-y-auto overflow-x-hidden">
                     <div className="flex items-center justify-between mb-10">
                         <div>
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Architecture Edit</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Digital Presence Configuration</p>
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Edit Profile</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Update your name, bio, and photo</p>
                         </div>
                         <button 
                             onClick={onClose}
@@ -202,7 +202,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                                     </>
                                 ) : (
                                     <>
-                                        <Save className="w-4 h-4" /> Commit Profile Sync
+                                        <Save className="w-4 h-4" /> Save Changes
                                     </>
                                 )}
                             </Button>

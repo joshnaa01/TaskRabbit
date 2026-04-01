@@ -7,66 +7,77 @@ import Conversation from '../models/Conversation.js';
 export const getAdminStatsService = async () => {
     const totalUsers = await User.countDocuments();
     const providers = await User.countDocuments({ role: 'provider' });
-    const clients = await User.countDocuments({ role: 'client' });
+    const clientsCount = await User.countDocuments({ role: 'client' });
 
     const totalBookings = await Booking.countDocuments();
-    const activeBookings = await Booking.countDocuments({ status: { $in: ['Pending', 'Accepted'] } });
+    const activeBookings = await Booking.countDocuments({ status: { $in: ['Pending', 'Accepted', 'In Progress'] } });
     
-    const totalServices = await Service.countDocuments();
+    // Financial Intelligence Split (70/30) - Tracks all verified (Completed) work for both Admin and Provider
+    const verifiedBookings = await Booking.find({ status: 'Completed' });
+    const totalVolume = verifiedBookings.reduce((acc, b) => acc + (b.finalPrice || 0), 0);
+    const platformEarnings = verifiedBookings.reduce((acc, b) => acc + (b.commissionAdmin || 0), 0);
+    const providerPayouts = verifiedBookings.reduce((acc, b) => acc + (b.commissionProvider || 0), 0);
 
-    // Calculate approx revenue
-    const paidBookings = await Booking.find({ paid: true });
-    const totalRevenue = paidBookings.reduce((acc, curr) => acc + (curr.finalPrice || curr.basePrice || 0), 0);
-    // Platform fee (e.g. 10%)
-    const platformEarnings = totalRevenue * 0.10;
+    // Periodized Stats
+    const getCountForRange = async (days) => {
+        const dateLimit = new Date();
+        dateLimit.setDate(dateLimit.getDate() - days);
+        return await Booking.countDocuments({ createdAt: { $gte: dateLimit } });
+    };
 
-    // Recent Activity
-    const recentBookings = await Booking.find()
-      .populate('serviceId', 'title')
-      .populate('clientId', 'name')
-      .populate('providerId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(5);
+    const periodicStats = {
+        last7Days: await getCountForRange(7),
+        lastMonth: await getCountForRange(30),
+        lastYear: await getCountForRange(365)
+    };
 
-    // Monthly Revenue (Last 6 months)
+    // Top Performers Aggregations
+    const topClients = await Booking.aggregate([
+        { $group: { _id: '$clientId', count: { $sum: 1 }, totalSpend: { $sum: '$finalPrice' } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+        { $unwind: '$user' },
+        { $project: { name: '$user.name', count: 1, totalSpend: 1 } }
+    ]);
+
+    const topProvidersByBookings = await Booking.aggregate([
+        { $group: { _id: '$providerId', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+        { $unwind: '$user' },
+        { $project: { name: '$user.name', count: 1 } }
+    ]);
+
+    const topProvidersByEarnings = await Booking.aggregate([
+        { $group: { _id: '$providerId', totalEarnings: { $sum: '$commissionProvider' } } },
+        { $sort: { totalEarnings: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+        { $unwind: '$user' },
+        { $project: { name: '$user.name', totalEarnings: 1 } }
+    ]);
+
+    // Trend Graphs
     const monthlyRevenue = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleString('default', { month: 'short' });
+        const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
         
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-
-        const monthBookings = await Booking.find({ 
-            paid: true, 
-            updatedAt: { $gte: startOfMonth, $lte: endOfMonth } 
-        });
-        const monthRev = monthBookings.reduce((acc, curr) => acc + (curr.finalPrice || curr.basePrice || 0), 0) * 0.10; // Platform share only for trends
-        monthlyRevenue.push({ name: monthName, platformRevenue: Math.round(monthRev) });
+        const monthData = await Booking.find({ status: 'Completed', updatedAt: { $gte: start, $lte: end } });
+        const adminShare = monthData.reduce((acc, curr) => acc + (curr.commissionAdmin || 0), 0);
+        monthlyRevenue.push({ name: monthName, platformRevenue: Math.round(adminShare) });
     }
 
-    // Service Distribution (Remote vs In-Person)
-    const remoteCount = await Service.countDocuments({ serviceType: 'remote' });
-    const inPersonCount = await Service.countDocuments({ serviceType: 'in-person' });
-    const serviceDistribution = [
-        { name: 'Remote', value: remoteCount },
-        { name: 'In-Person', value: inPersonCount }
-    ];
-
-    // Booking Status Breakdown
-    const statuses = ['Pending', 'Accepted', 'Completed', 'Cancelled', 'Disputed'];
-    const bookingStatusData = await Promise.all(statuses.map(async (s) => ({
-        name: s,
-        value: await Booking.countDocuments({ status: s })
-    })));
-
     return {
-        users: { total: totalUsers, providers, clients },
-        bookings: { total: totalBookings, active: activeBookings, statusBreakdown: bookingStatusData },
-        services: { total: totalServices, distribution: serviceDistribution },
-        revenue: { total: totalRevenue, platformEarnings, monthlyTrends: monthlyRevenue },
-        recentBookings
+        users: { total: totalUsers, providers, clients: clientsCount },
+        bookings: { total: totalBookings, active: activeBookings, periodicStats },
+        revenue: { totalVolume, platformEarnings, providerPayouts, monthlyTrends: monthlyRevenue },
+        performance: { topClients, topProvidersByBookings, topProvidersByEarnings }
     };
 };
 

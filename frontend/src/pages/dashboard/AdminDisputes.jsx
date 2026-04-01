@@ -21,6 +21,9 @@ const AdminDisputes = () => {
     const [verdict, setVerdict] = useState('');
     const [resolutionStatus, setResolutionStatus] = useState('Completed'); // or Cancelled
     const [finalPrice, setFinalPrice] = useState('');
+    const [actionLoading, setActionLoading] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     const fetchDisputedBookings = async () => {
         try {
@@ -31,6 +34,7 @@ const AdminDisputes = () => {
             // Assuming we only get bookings where isDisputed is true or status is Disputed
             const disputedBookings = allBookings.filter(b => b.isDisputed || b.status === 'Disputed' || (b.dispute && b.dispute.status === 'Open'));
             setBookings(disputedBookings);
+            setCurrentPage(1);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to fetch disputes');
         } finally {
@@ -47,6 +51,7 @@ const AdminDisputes = () => {
         if (resolutionStatus === 'Completed' && finalPrice === '') return toast.error('Please provide a final price point for the completed service');
 
         try {
+            setActionLoading(bookingId);
             const payload = {
                 status: resolutionStatus,
                 adminVerdict: verdict,
@@ -60,6 +65,8 @@ const AdminDisputes = () => {
             fetchDisputedBookings();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to resolve dispute');
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -74,12 +81,12 @@ const AdminDisputes = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-4">
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Dispute Resolution Console</h1>
+                        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Disputes</h1>
                         <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                            {bookings.length} Case{bookings.length !== 1 ? 's' : ''} Identified
+                            {filteredDisputes.length} Case{filteredDisputes.length !== 1 ? 's' : ''}
                         </span>
                     </div>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Mediate Conflict and Enforce Policy</p>
+                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Review and resolve service disputes</p>
                 </div>
                 <button onClick={fetchDisputedBookings} className="p-3 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                     <RefreshCcw className="w-5 h-5" />
@@ -96,7 +103,7 @@ const AdminDisputes = () => {
                             placeholder="Search active disputes by service or parties..."
                             className="w-full bg-white border border-slate-100 rounded-2xl py-3 pl-12 text-xs font-bold focus:ring-4 focus:ring-blue-600/10 placeholder:text-slate-400 transition-all outline-none"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                     </div>
                 </div>
@@ -113,8 +120,8 @@ const AdminDisputes = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
-                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Scanning Dispute Registry...</td></tr>
-                            ) : filteredDisputes.length > 0 ? filteredDisputes.map((booking) => (
+                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Loading disputes...</td></tr>
+                            ) : filteredDisputes.length > 0 ? filteredDisputes.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((booking) => (
                                 <React.Fragment key={booking._id}>
                                     <tr className="group hover:bg-emerald-50/30 transition-all">
                                         <td className="px-10 py-8">
@@ -140,7 +147,7 @@ const AdminDisputes = () => {
                                                 <Link
                                                     to={`/admin/messages?to=${booking.clientId?._id}`}
                                                     className="p-3 bg-slate-50 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                                    title="View Client Comms"
+                                                    title="Message Client"
                                                 >
                                                     <MessageSquare className="w-4 h-4" />
                                                 </Link>
@@ -172,7 +179,7 @@ const AdminDisputes = () => {
 
                                                     <div className="space-y-6">
                                                         <div>
-                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Platform Resolution Status</label>
+                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Resolution Outcome</label>
                                                             <div className="flex items-center gap-4">
                                                                 <button
                                                                     onClick={() => setResolutionStatus('Completed')}
@@ -180,7 +187,7 @@ const AdminDisputes = () => {
                                                             ${resolutionStatus === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-emerald-200 hover:text-emerald-500'}
                                                          `}
                                                                 >
-                                                                    <CheckCircle2 className="w-4 h-4" /> Finalize Delivery (Payout Trigger)
+                                                                    <CheckCircle2 className="w-4 h-4" /> Complete & Pay Provider
                                                                 </button>
                                                                 <button
                                                                     onClick={() => setResolutionStatus('Cancelled')}
@@ -188,7 +195,7 @@ const AdminDisputes = () => {
                                                             ${resolutionStatus === 'Cancelled' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-emerald-200 hover:text-emerald-500'}
                                                          `}
                                                                 >
-                                                                    <XSquare className="w-4 h-4" /> Nullify Contract (Refund Cycle)
+                                                                    <XSquare className="w-4 h-4" /> Cancel & Refund Client
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -196,7 +203,7 @@ const AdminDisputes = () => {
 
                                                         {resolutionStatus === 'Completed' && (
                                                             <div>
-                                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adjusted Final Payout (NPR)</label>
+                                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adjusted Final Price (NPR)</label>
                                                                 <input
                                                                     type="number"
                                                                     value={finalPrice}
@@ -208,7 +215,7 @@ const AdminDisputes = () => {
                                                         )}
 
                                                         <div>
-                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Administrative Verdict / Justification</label>
+                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Admin Decision / Reason</label>
                                                             <textarea
                                                                 value={verdict}
                                                                 onChange={e => setVerdict(e.target.value)}
@@ -221,7 +228,7 @@ const AdminDisputes = () => {
                                                             onClick={() => handleResolve(booking._id)}
                                                             className="w-full py-4 text-[11px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-900/10 hover:bg-emerald-600 hover:shadow-emerald-600/20 transition-all active:scale-[0.98]"
                                                         >
-                                                            Enforce Resolution
+                                                            Submit Resolution
                                                         </button>
                                                     </div>
                                                 </div>
@@ -233,13 +240,29 @@ const AdminDisputes = () => {
                                 <tr>
                                     <td colSpan="3" className="px-10 py-32 text-center text-slate-400">
                                         <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-20 text-emerald-500" />
-                                        <p className="text-xs font-black uppercase tracking-widest text-emerald-600">No Active Disputes in the Queue</p>
+                                        <p className="text-xs font-black uppercase tracking-widest text-emerald-600">No active disputes</p>
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination */}
+                {filteredDisputes.length > ITEMS_PER_PAGE && (
+                    <div className="flex items-center justify-between px-10 py-8 border-t border-slate-50 bg-slate-50/10">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredDisputes.length)} of {filteredDisputes.length}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 transition-all">Previous</button>
+                            {Array.from({ length: Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                                <button key={page} onClick={() => setCurrentPage(page)} className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === page ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'}`}>{page}</button>
+                            ))}
+                            <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE)} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 transition-all">Next</button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

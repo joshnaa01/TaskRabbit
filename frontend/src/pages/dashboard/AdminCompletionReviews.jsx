@@ -19,6 +19,8 @@ const AdminCompletionReviews = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedReview, setExpandedReview] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
     const [feedback, setFeedback] = useState('');
     const [actionLoading, setActionLoading] = useState(null);
 
@@ -27,6 +29,7 @@ const AdminCompletionReviews = () => {
             setLoading(true);
             const res = await api.get('/admin/completion-reviews');
             setBookings(res.data.data || []);
+            setCurrentPage(1);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to fetch pending reviews');
         } finally {
@@ -73,8 +76,8 @@ const AdminCompletionReviews = () => {
         <div className="flex flex-col gap-10">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Work Verification Queue</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Verify deliverables before client payout</p>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Work Verification</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Review submitted work before client payment</p>
                 </div>
                 <button onClick={fetchPendingReviews} className="p-3 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                     <RefreshCcw className="w-5 h-5" />
@@ -88,13 +91,13 @@ const AdminCompletionReviews = () => {
                             <tr className="bg-slate-50/50">
                                 <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Task Details</th>
                                 <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Submission Info</th>
-                                <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Review Portal</th>
+                                <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
-                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Analyzing submissions...</td></tr>
-                            ) : bookings.length > 0 ? bookings.map((booking) => (
+                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Loading submissions...</td></tr>
+                            ) : bookings.length > 0 ? bookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((booking) => (
                                 <React.Fragment key={booking._id}>
                                     <tr className="group hover:bg-indigo-50/30 transition-all">
                                         <td className="px-10 py-8">
@@ -103,8 +106,8 @@ const AdminCompletionReviews = () => {
                                                     {booking.serviceId?.serviceType === 'remote' ? <Terminal className="w-6 h-6" /> : <MapPin className="w-6 h-6" />}
                                                 </div>
                                                 <div>
-                                                    <p className="font-black text-slate-900 mb-0.5">{booking.serviceId?.title || 'Unknown Task'}</p>
-                                                    <p className="text-xs font-bold text-slate-500">Tasker: <span className="text-slate-900">{booking.providerId?.name}</span> • Client: <span className="text-slate-900">{booking.clientId?.name}</span></p>
+                                                    <p className="font-black text-slate-900 mb-0.5">{booking.serviceId?.title || 'Service'}</p>
+                                                    <p className="text-xs font-bold text-slate-500">Provider: <span className="text-slate-900">{booking.providerId?.name}</span> • Client: <span className="text-slate-900">{booking.clientId?.name}</span></p>
                                                 </div>
                                             </div>
                                         </td>
@@ -134,7 +137,7 @@ const AdminCompletionReviews = () => {
                                                             : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'}
                                                 `}
                                                 >
-                                                    {expandedReview === booking._id ? 'Close Panel' : 'Inspect Evidence'}
+                                                    {expandedReview === booking._id ? 'Close' : 'Review Work'}
                                                 </button>
                                             </div>
                                         </td>
@@ -146,7 +149,7 @@ const AdminCompletionReviews = () => {
                                                     {/* Deliverables Panel */}
                                                     <div className="bg-white rounded-[32px] border border-emerald-100 p-8 shadow-2xl shadow-emerald-900/5 h-full">
                                                         <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                                            <FileText className="w-4 h-4 text-emerald-500" /> Deliverables Inspection
+                                                            <FileText className="w-4 h-4 text-emerald-500" /> Submitted Work
                                                         </h3>
 
                                                         <div className="space-y-6">
@@ -172,7 +175,7 @@ const AdminCompletionReviews = () => {
                                                                 ) : (
                                                                     <div className="col-span-2 py-12 text-center border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50">
                                                                         <AlertCircle className="w-10 h-10 mx-auto text-slate-200 mb-3" />
-                                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Visual Assets Found</p>
+                                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No files attached</p>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -186,22 +189,22 @@ const AdminCompletionReviews = () => {
                                                             <div className="absolute top-0 right-0 p-8 opacity-5">
                                                                 <CheckCircle2 className="w-24 h-24 text-emerald-600" />
                                                             </div>
-                                                            <h3 className="text-xs font-black text-emerald-700 uppercase tracking-widest mb-2">Path A: Final Approval</h3>
-                                                            <p className="text-[11px] font-bold text-slate-500 mb-6 max-w-[280px]">Accept the work as completed. This will release the submission to the client and trigger the final payout phase.</p>
+                                                            <h3 className="text-xs font-black text-emerald-700 uppercase tracking-widest mb-2">Approve Work</h3>
+                                                            <p className="text-[11px] font-bold text-slate-500 mb-6 max-w-[280px]">Accept the work as completed. The client will be notified to make payment.</p>
 
                                                             <button
                                                                 onClick={() => handleApprove(booking._id)}
                                                                 disabled={actionLoading}
                                                                 className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-3 active:scale-[0.98]"
                                                             >
-                                                                <CheckCircle2 className="w-4 h-4" /> {actionLoading === booking._id ? 'Verifying...' : 'Approve Submission'}
+                                                                <CheckCircle2 className="w-4 h-4" /> {actionLoading === booking._id ? 'Approving...' : 'Approve'}
                                                             </button>
                                                         </div>
 
                                                         {/* Rejection Section */}
                                                         <div className="bg-white rounded-[32px] border border-rose-100 p-8 shadow-xl shadow-rose-900/5 relative overflow-hidden">
-                                                            <h3 className="text-xs font-black text-rose-700 uppercase tracking-widest mb-2">Path B: Correction Request</h3>
-                                                            <p className="text-[11px] font-bold text-slate-500 mb-6 max-w-[280px]">Request revisions or reject poor quality work. The provider will be notified to resubmit.</p>
+                                                            <h3 className="text-xs font-black text-rose-700 uppercase tracking-widest mb-2">Request Changes</h3>
+                                                            <p className="text-[11px] font-bold text-slate-500 mb-6 max-w-[280px]">Ask the provider to redo or improve their work before approving.</p>
 
                                                             <div className="space-y-4">
                                                                 <div className="relative">
@@ -220,7 +223,7 @@ const AdminCompletionReviews = () => {
                                                                     disabled={actionLoading}
                                                                     className="w-full py-4 text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                                                                 >
-                                                                    <XSquare className="w-4 h-4" /> {actionLoading === booking._id ? 'Rejecting...' : 'Reject Submission'}
+                                                                    <XSquare className="w-4 h-4" /> {actionLoading === booking._id ? 'Rejecting...' : 'Reject'}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -234,7 +237,7 @@ const AdminCompletionReviews = () => {
                                 <tr>
                                     <td colSpan="3" className="px-10 py-32 text-center text-slate-400">
                                         <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-20 text-emerald-500" />
-                                        <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Verification Queue is Empty</p>
+                                        <p className="text-xs font-black uppercase tracking-widest text-emerald-600">No pending reviews</p>
                                     </td>
                                 </tr>
                             )}
@@ -242,6 +245,22 @@ const AdminCompletionReviews = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {bookings.length > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between px-2 pt-6">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, bookings.length)} of {bookings.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 transition-all">Previous</button>
+                        {Array.from({ length: Math.ceil(bookings.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                            <button key={page} onClick={() => setCurrentPage(page)} className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === page ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'}`}>{page}</button>
+                        ))}
+                        <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(bookings.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(bookings.length / ITEMS_PER_PAGE)} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 transition-all">Next</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

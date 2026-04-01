@@ -39,6 +39,11 @@ export const createBookingService = async (userId, userName, body) => {
     }
   }
 
+  const totalAmount = price || service.price || 0;
+  const commissionPercentage = 30;
+  const commissionAdmin = totalAmount * (commissionPercentage / 100);
+  const commissionProvider = totalAmount - commissionAdmin;
+
   const booking = await Booking.create({
     serviceId,
     clientId: userId,
@@ -47,8 +52,11 @@ export const createBookingService = async (userId, userName, body) => {
     timeSlot,
     address,
     requirements,
-    price,
     basePrice: service.price,
+    finalPrice: totalAmount,
+    commissionPercentage,
+    commissionAdmin,
+    commissionProvider,
     status: 'Pending'
   });
 
@@ -212,7 +220,11 @@ export const updateBookingStatusService = async (bookingId, user, body) => {
   }
 
   booking.status = status || booking.status;
-  if (finalPrice !== undefined) booking.finalPrice = finalPrice;
+  if (finalPrice !== undefined) {
+    booking.finalPrice = finalPrice;
+    booking.commissionAdmin = finalPrice * (booking.commissionPercentage / 100);
+    booking.commissionProvider = finalPrice - booking.commissionAdmin;
+  }
   if (duration) booking.duration = duration;
   if (rejectionReason) booking.rejectionReason = rejectionReason;
 

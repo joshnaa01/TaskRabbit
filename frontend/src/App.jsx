@@ -109,8 +109,8 @@ function App() {
             <Route path="/provider/earnings" element={
               <RoleRoute roles={['provider']}><DashboardLayout>
                 <div className="p-20 text-center flex flex-col items-center">
-                  <p className="text-4xl font-black text-slate-900 tracking-tight mb-4">Financial Command</p>
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Ledger reconciliation active</p>
+                  <p className="text-4xl font-black text-slate-900 tracking-tight mb-4">My Earnings</p>
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Total income from your services</p>
                 </div>
               </DashboardLayout></RoleRoute>
             } />

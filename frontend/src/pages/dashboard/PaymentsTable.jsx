@@ -10,10 +10,13 @@ import {
   XCircle
 } from 'lucide-react';
 
+const ITEMS_PER_PAGE = 8;
+
 const PaymentsTable = () => {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         const fetchPayments = async () => {
@@ -45,8 +48,8 @@ const PaymentsTable = () => {
         <div className="flex flex-col gap-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Payment Timeline</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-xs mt-2">Track your escrow transactions and payouts</p>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Payments</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-wider text-xs mt-2">Track your transactions and payouts</p>
                 </div>
             </div>
 
@@ -58,12 +61,15 @@ const PaymentsTable = () => {
                                 <th className="px-10 py-6 text-xs font-black text-slate-500 uppercase tracking-widest">Transaction Details</th>
                                 <th className="px-10 py-6 text-xs font-black text-slate-500 uppercase tracking-widest">Amount</th>
                                 <th className="px-10 py-6 text-xs font-black text-slate-500 uppercase tracking-widest">Date & Time</th>
-                                <th className="px-10 py-6 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Escrow Status</th>
+                                <th className="px-10 py-6 text-xs font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
                                 <th className="px-10 py-6"></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {payments?.length > 0 ? payments.map((payment) => (
+                            {payments?.length > 0 ? (() => {
+                                const totalPages = Math.ceil(payments.length / ITEMS_PER_PAGE);
+                                const paginated = payments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+                                return paginated.map((payment) => (
                                 <tr key={payment._id} className="group hover:bg-slate-50/50 transition-colors cursor-pointer">
                                     <td className="px-10 py-10">
                                         <div className="flex items-center gap-6">
@@ -108,7 +114,7 @@ const PaymentsTable = () => {
                                        </button>
                                     </td>
                                 </tr>
-                            )) : (
+                            )); })() : (
                                 <tr>
                                     <td colSpan={5} className="px-10 py-24 text-center">
                                        <div className="flex flex-col items-center">
@@ -125,6 +131,25 @@ const PaymentsTable = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {payments?.length > ITEMS_PER_PAGE && (() => {
+                const totalPages = Math.ceil(payments.length / ITEMS_PER_PAGE);
+                return (
+                    <div className="flex items-center justify-between px-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, payments.length)} of {payments.length}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Previous</button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button key={page} onClick={() => setCurrentPage(page)} className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === page ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'}`}>{page}</button>
+                            ))}
+                            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Next</button>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 };

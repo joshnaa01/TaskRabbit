@@ -125,8 +125,8 @@ const ProviderServices = () => {
              <div className="relative bg-white rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
                 <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
-                        <h2 className="text-sm font-black text-slate-900 tracking-tight">Edit Service Profile</h2>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Synchronized Edition</p>
+                        <h2 className="text-sm font-black text-slate-900 tracking-tight">Edit Service</h2>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Update your details</p>
                     </div>
                     <button onClick={onClose} className="p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-red-500 transition-all">
                         <X className="w-4 h-4" />
@@ -136,17 +136,17 @@ const ProviderServices = () => {
                 <form onSubmit={hUpdate} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
                     <div className="space-y-4">
                        <div className="space-y-1.5">
-                          <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Service Label</label>
+                          <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Service Name</label>
                           <input name="title" value={form.title} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all shadow-inner" />
                        </div>
                        
                        <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
-                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Market (NPR)</label>
+                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Price (NPR)</label>
                              <input type="number" name="price" value={form.price} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all shadow-inner" />
                           </div>
                           <div className="space-y-1.5">
-                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Infrastructure</label>
+                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Category</label>
                              <select name="categoryId" value={form.categoryId} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all appearance-none shadow-inner">
                                 {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                              </select>
@@ -154,13 +154,13 @@ const ProviderServices = () => {
                        </div>
 
                        <div className="space-y-1.5">
-                          <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Engagement Artifact Detail</label>
+                          <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Description</label>
                           <textarea name="description" value={form.description} onChange={hChange} rows="2" className="w-full bg-slate-50 border-none rounded-xl p-4 text-[12px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all resize-none shadow-inner leading-relaxed" />
                        </div>
 
                        <div className="pt-1">
                           <ImageUpload
-                             label="Primary Visual Asset"
+                             label="Service Photo"
                              currentImage={form.images?.[0]}
                              onUploadSuccess={(url) => setForm({ ...form, images: url ? [url] : [] })}
                              folder="services"
@@ -177,7 +177,7 @@ const ProviderServices = () => {
                        >
                           {updating ? 'Saving...' : (
                               <span className="flex items-center justify-center gap-2">
-                                 <Save className="w-3 h-3" /> Commit Sync
+                                 <Save className="w-3 h-3" /> Save Changes
                               </span>
                           )}
                        </Button>
@@ -191,7 +191,7 @@ const ProviderServices = () => {
    if (loading) return (
       <div className="flex flex-col items-center justify-center h-96 gap-6">
          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-blue-600/10"></div>
-         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Synchronizing Your Services...</p>
+         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading Your Services...</p>
       </div>
    );
 
@@ -213,9 +213,9 @@ const ProviderServices = () => {
                   <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-600/20">
                      <Briefcase className="w-5 h-5" />
                   </div>
-                  <h1 className="text-4xl font-black text-slate-900 tracking-tight">Service Inventory</h1>
+                  <h1 className="text-4xl font-black text-slate-900 tracking-tight">My Services</h1>
                </div>
-               <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Manage and showcase your professional offerings</p>
+               <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Manage your service listings</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -310,10 +310,10 @@ const ProviderServices = () => {
                <table className="w-full text-left border-collapse">
                   <thead>
                      <tr className="bg-slate-50/50">
-                        <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service Artifact</th>
+                        <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service Name</th>
                         <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Type</th>
                         <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Pricing</th>
-                        <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Lifecycle</th>
+                        <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100/50">
@@ -370,7 +370,7 @@ const ProviderServices = () => {
                      disabled={page === 1}
                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30"
                   >
-                     Previous Part
+                     Previous
                   </button>
                   <div className="flex items-center gap-2 px-2">
                      {[...Array(totalPages)].map((_, i) => (
@@ -388,10 +388,10 @@ const ProviderServices = () => {
                      disabled={page === totalPages}
                      className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30"
                   >
-                     Next Part
+                     Next
                   </button>
                </div>
-               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Inventory segment {page} of {totalPages}</p>
+               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Page {page} of {totalPages}</p>
             </div>
          )}
 
@@ -411,7 +411,7 @@ const ProviderServices = () => {
                   </div>
                   <h3 className="text-lg font-black text-slate-900 text-center mb-2 tracking-tight">Deactivate Service?</h3>
                   <p className="text-slate-500 font-bold text-[10px] text-center mb-6 uppercase tracking-widest leading-relaxed">
-                     This service will be hidden from clients.
+                     This service will no longer be visible to clients.
                   </p>
                   
                   <div className="flex gap-2">
