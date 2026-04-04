@@ -132,7 +132,7 @@ const AddService = () => {
                 await api.post('/services', payload);
                 toast.success("✨ Your Service is Now Live!");
             }
-            navigate('/dashboard/services');
+            navigate('/provider/services');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failure to list service profile.');
         } finally {
@@ -148,7 +148,7 @@ const AddService = () => {
             {/* Header Area */}
             <div className="flex items-center gap-6 mb-12">
                 <button
-                    onClick={() => navigate('/dashboard/services')}
+                    onClick={() => navigate('/provider/services')}
                     className="p-4 bg-white rounded-3xl border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:shadow-xl hover:shadow-blue-900/5 transition-all"
                 >
                     <ArrowLeft className="w-5 h-5" />

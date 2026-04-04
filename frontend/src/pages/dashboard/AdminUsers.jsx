@@ -133,10 +133,17 @@ const AdminUsers = () => {
                         </button>
                     )}
                     <button
-                        onClick={() => setEmailModal({ open: true, target: filterRole === 'all' ? 'all' : filterRole })}
+                        onClick={() => {
+                            if (selectedUserIds.length > 0) {
+                                const selectedEmails = users.filter(u => selectedUserIds.includes(u._id)).map(u => u.email);
+                                setEmailModal({ open: true, target: selectedEmails });
+                            } else {
+                                setEmailModal({ open: true, target: filterRole === 'all' ? 'all' : filterRole });
+                            }
+                        }}
                         className="flex items-center gap-3 px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 hover:bg-blue-600 hover:shadow-blue-600/40 transition-all"
                     >
-                        <Mail className="w-4 h-4" /> Broadcast Email
+                        <Mail className="w-4 h-4" /> {selectedUserIds.length > 0 ? `Mass Email (${selectedUserIds.length})` : 'Broadcast Email'}
                     </button>
                     <button onClick={fetchUsers} className="p-3.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                         <RefreshCcw className="w-5 h-5" />

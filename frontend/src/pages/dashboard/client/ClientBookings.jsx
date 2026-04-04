@@ -2,30 +2,30 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Calendar, 
-  Clock, 
-  ArrowRight,
-  CheckCircle2,
-  Clock3,
-  XCircle,
-  FileText,
-  CreditCard,
-  Check,
-  UserCircle,
-  AlertCircle,
-  MessageSquare,
-  UploadCloud,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  Terminal,
-  MapPin,
-  RefreshCcw,
-  Star,
-  Heart,
-  Flag,
-  Activity
+import {
+    Calendar,
+    Clock,
+    ArrowRight,
+    CheckCircle2,
+    Clock3,
+    XCircle,
+    FileText,
+    CreditCard,
+    Check,
+    UserCircle,
+    AlertCircle,
+    MessageSquare,
+    UploadCloud,
+    ChevronDown,
+    ChevronUp,
+    Download,
+    Terminal,
+    MapPin,
+    RefreshCcw,
+    Star,
+    Heart,
+    Flag,
+    Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ReviewModal from '../../../components/dashboard/ReviewModal';
@@ -81,7 +81,7 @@ const ClientBookings = () => {
                     toast.warning('Booking cancelled.');
                     break;
                 case 'pay':
-                    navigate(`/client/checkout/${bookingId}`); 
+                    navigate(`/client/checkout/${bookingId}`);
                     return;
                 case 'submitReview':
                     await api.post('/reviews', { ...extraData, bookingId });
@@ -112,15 +112,16 @@ const ClientBookings = () => {
             case 'pending review': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
             case 'completed': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'rejected': return 'bg-red-50 text-red-600 border-red-100';
+            case 'expired': return 'bg-rose-50 text-rose-600 border-rose-100';
             default: return 'bg-slate-50 text-slate-500 border-slate-100';
         }
     };
 
     if (loading) return (
-      <div className="flex flex-col items-center justify-center h-96 gap-6">
-        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-blue-600/10"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading your bookings...</p>
-      </div>
+        <div className="flex flex-col items-center justify-center h-96 gap-6">
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-blue-600/10"></div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading your bookings...</p>
+        </div>
     );
 
     const totalPages = Math.ceil(sortedBookings.length / ITEMS_PER_PAGE);
@@ -143,9 +144,8 @@ const ClientBookings = () => {
                     <button
                         key={tab.key}
                         onClick={() => { setActiveFilter(tab.key); setCurrentPage(1); }}
-                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                            activeFilter === tab.key ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
-                        }`}
+                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${activeFilter === tab.key ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
+                            }`}
                     >
                         {tab.label}
                     </button>
@@ -157,6 +157,7 @@ const ClientBookings = () => {
                     <thead>
                         <tr className="bg-slate-50/50">
                             <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service</th>
+                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Cost</th>
                             <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
                             <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                         </tr>
@@ -176,6 +177,12 @@ const ClientBookings = () => {
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="px-10 py-10 text-center">
+                                        <div className="flex flex-col items-center">
+                                            <p className="text-sm font-black text-slate-900 tracking-tight">Rs. {(booking.finalPrice || booking.basePrice || 0).toLocaleString()}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{booking.paid ? 'Paid' : 'Due'}</p>
+                                        </div>
+                                    </td>
                                     <td className="px-10 py-10">
                                         <div className="flex flex-col items-center gap-2">
                                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyles(booking.status, booking.paid)}`}>
@@ -186,7 +193,7 @@ const ClientBookings = () => {
                                     </td>
                                     <td className="px-10 py-10 text-right">
                                         {booking.status === 'Completed' && !booking.paid ? (
-                                            <button 
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); handleAction('pay', booking._id); }}
                                                 className="px-6 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 shadow-xl shadow-blue-500/20 transition-all"
                                             >
@@ -240,7 +247,7 @@ const ClientBookings = () => {
                                                                                 <p className="text-xs font-medium text-slate-600 italic">"{booking.review.comment}"</p>
                                                                             </div>
                                                                         ) : (
-                                                                            <button 
+                                                                            <button
                                                                                 onClick={() => { setSelectedBookingId(booking._id); setIsReviewOpen(true); }}
                                                                                 className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all flex items-center justify-center gap-2"
                                                                             >
@@ -286,11 +293,10 @@ const ClientBookings = () => {
                             <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
-                                className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
-                                    currentPage === page 
-                                        ? 'bg-slate-900 text-white shadow-lg' 
-                                        : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'
-                                }`}
+                                className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === page
+                                    ? 'bg-slate-900 text-white shadow-lg'
+                                    : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'
+                                    }`}
                             >
                                 {page}
                             </button>
@@ -306,7 +312,7 @@ const ClientBookings = () => {
                 </div>
             )}
 
-            <ReviewModal 
+            <ReviewModal
                 isOpen={isReviewOpen}
                 onClose={() => setIsReviewOpen(false)}
                 bookingId={selectedBookingId}

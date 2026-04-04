@@ -12,9 +12,13 @@ import connectDB from './config/db.js';
 import Conversation from './models/Conversation.js';
 import Message from './models/Message.js';
 import Notification from './models/Notification.js';
+import { startBookingExpiryJob } from './services/job.service.js';
 
 // Connect to database
 await connectDB();
+
+// Start Background Jobs
+startBookingExpiryJob();
 
 
 const app = express();

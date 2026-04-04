@@ -16,7 +16,8 @@ const NotificationSchema = new mongoose.Schema({
       'completion_review',
       'revision_requested',
       'booking_update',
-      'complaint'
+      'complaint',
+      'booking_expired'
     ],
     required: true
   },

@@ -122,7 +122,7 @@ const CheckoutForm = ({ booking, onSuccess }) => {
         <p className="text-sm text-slate-500 font-medium mb-2">Your payment of <span className="font-black text-emerald-600">Rs. {(booking.basePrice || 0).toFixed(2)}</span> has been processed.</p>
         <p className="text-xs text-slate-400 font-bold mb-10">The provider has been notified and funds will be released.</p>
         <button
-          onClick={() => navigate('/dashboard/bookings')}
+          onClick={() => navigate('/client/bookings')}
           className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10"
         >
           Back to Bookings
@@ -365,7 +365,7 @@ const CheckoutPage = () => {
 
         if (found.paid) {
           toast.info('This booking has already been paid.');
-          navigate('/dashboard/bookings', { replace: true });
+          navigate('/client/bookings', { replace: true });
           return;
         }
 
@@ -397,7 +397,7 @@ const CheckoutPage = () => {
         <h2 className="text-xl font-black text-slate-900">Checkout Unavailable</h2>
         <p className="text-sm text-slate-500 font-medium">{error}</p>
         <button
-          onClick={() => navigate('/dashboard/bookings')}
+          onClick={() => navigate('/client/bookings')}
           className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest"
         >
           Back to Bookings
@@ -411,7 +411,7 @@ const CheckoutPage = () => {
       {/* Page Header */}
       <div className="flex items-center gap-4 mb-10">
         <button
-          onClick={() => navigate('/dashboard/bookings')}
+          onClick={() => navigate('/client/bookings')}
           className="p-3 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm"
         >
           <ArrowLeft className="w-5 h-5" />

@@ -11,7 +11,7 @@ export const getAdminStatsService = async () => {
 
     const totalBookings = await Booking.countDocuments();
     const activeBookings = await Booking.countDocuments({ status: { $in: ['Pending', 'Accepted', 'In Progress'] } });
-    
+
     // Financial Intelligence Split (70/30) - Tracks all verified (Completed) work for both Admin and Provider
     const verifiedBookings = await Booking.find({ status: 'Completed' });
     const totalVolume = verifiedBookings.reduce((acc, b) => acc + (b.finalPrice || 0), 0);
@@ -67,7 +67,7 @@ export const getAdminStatsService = async () => {
         const monthName = d.toLocaleString('default', { month: 'short' });
         const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-        
+
         const monthData = await Booking.find({ status: 'Completed', updatedAt: { $gte: start, $lte: end } });
         const adminShare = monthData.reduce((acc, curr) => acc + (curr.commissionAdmin || 0), 0);
         monthlyRevenue.push({ name: monthName, platformRevenue: Math.round(adminShare) });
@@ -97,23 +97,23 @@ export const updateUserStatusService = async (id, updateBody) => {
     if (updateBody.role) user.role = updateBody.role;
     if (updateBody.status !== undefined) user.status = updateBody.status;
     if (updateBody.isSuspicious !== undefined) user.isSuspicious = updateBody.isSuspicious;
-    
+
     if (updateBody.isApproved !== undefined) {
-      const previouslyApproved = user.isApproved;
-      user.isApproved = updateBody.isApproved;
-      
-      if (!previouslyApproved && user.isApproved && user.role === 'provider') {
-        // Send approval email
-        try {
-          await sendEmail({
-             to: user.email,
-             subject: 'Account Approved - TaskRabbit',
-             html: `<h3>Hello ${user.name},</h3><p>Your provider account has been approved by the admin. You can now log in to the portal and start accepting bookings.</p>`
-          });
-        } catch (error) {
-          console.error("Failed to send approval email:", error);
+        const previouslyApproved = user.isApproved;
+        user.isApproved = updateBody.isApproved;
+
+        if (!previouslyApproved && user.isApproved && user.role === 'provider') {
+            // Send approval email
+            try {
+                await sendEmail({
+                    to: user.email,
+                    subject: 'Account Approved - TaskRabbit',
+                    html: `<h3>Hello ${user.name},</h3><p>Your provider account has been approved by the admin. You can now log in to the portal and start accepting bookings.</p>`
+                });
+            } catch (error) {
+                console.error("Failed to send approval email:", error);
+            }
         }
-      }
     }
 
     await user.save();
@@ -125,7 +125,7 @@ export const deleteUserService = async (id) => {
     if (!user) throw new Error('User not found');
 
     await user.deleteOne();
-    
+
     // Cleanup related documents
     await Booking.deleteMany({ $or: [{ clientId: id }, { providerId: id }] });
     await Service.deleteMany({ providerId: id });
@@ -136,17 +136,17 @@ export const resolveDisputeService = async (id, updateBody, adminId) => {
     const booking = await Booking.findById(id).populate('clientId providerId serviceId');
 
     if (!booking) throw new Error('Booking not found');
-    
+
     // Guard: Flexible check for dispute state to avoid 500 on valid edge scenarios
     const isInDispute = booking.isDisputed || booking.status === 'Disputed' || (booking.dispute && booking.dispute.status === 'Open');
     if (!isInDispute) throw new Error('Booking is not in an active dispute state');
 
     if (status) booking.status = status;
-    
+
     // Guard: Ensure dispute object exists before assigning properties
     if (!booking.dispute) {
-        booking.dispute = { 
-            reason: 'Administrative Resolution', 
+        booking.dispute = {
+            reason: 'Administrative Resolution',
             status: 'Open',
             createdAt: new Date()
         };
@@ -161,7 +161,7 @@ export const resolveDisputeService = async (id, updateBody, adminId) => {
 
     // Trigger Platform Notifications for both parties
     const conversation = await Conversation.findOne({ participants: { $all: [booking.clientId._id, booking.providerId._id] } });
-    
+
     const notificationData = {
         sender: adminId,
         type: 'booking_update',
@@ -179,28 +179,29 @@ export const resolveDisputeService = async (id, updateBody, adminId) => {
 
 export const sendEmailService = async (body) => {
     const { to, role, subject, message } = body;
-    
+
     // Find recipients
     let recipients = [];
     if (to && to !== 'all') {
-      recipients.push(to);
+        if (Array.isArray(to)) recipients = [...to];
+        else recipients.push(to);
     } else if (role) {
-      let query = {};
-      if (role !== 'all') query.role = role;
-      const users = await User.find(query).select('email');
-      recipients = users.map(u => u.email);
+        let query = {};
+        if (role !== 'all') query.role = role;
+        const users = await User.find(query).select('email');
+        recipients = users.map(u => u.email);
     } else {
-      throw new Error('Please specify recipient or role');
+        throw new Error('Please specify recipient or role');
     }
 
     if (recipients.length === 0) {
-      throw new Error('No recipients found');
+        throw new Error('No recipients found');
     }
 
     const info = await sendEmail({
-      to: recipients,
-      subject: subject || 'Notification from TaskRabbit',
-      html: `<div>${message?.replace(/\n/g, '<br>')}</div>`
+        to: recipients,
+        subject: subject || 'Notification from TaskRabbit',
+        html: `<div>${message?.replace(/\n/g, '<br>')}</div>`
     });
 
     return info;
@@ -208,10 +209,10 @@ export const sendEmailService = async (body) => {
 
 export const getPendingReviewBookingsService = async () => {
     return await Booking.find({ status: 'Pending Review' })
-      .populate('serviceId', 'title serviceType')
-      .populate('clientId', 'name')
-      .populate('providerId', 'name')
-      .sort({ updatedAt: -1 });
+        .populate('serviceId', 'title serviceType')
+        .populate('clientId', 'name')
+        .populate('providerId', 'name')
+        .sort({ updatedAt: -1 });
 };
 
 export const approveCompletionService = async (bookingId, adminId) => {
@@ -314,6 +315,6 @@ export const getAdminProvidersMapService = async () => {
             }
         }
     ]);
-    
+
     return providers;
 };

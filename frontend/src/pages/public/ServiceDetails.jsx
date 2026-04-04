@@ -105,7 +105,7 @@ const ServiceDetails = () => {
 
          // 2. Direct to dashboard without immediate payment
          toast.success("Booking request transmitted! Awaiting provider acceptance.");
-         navigate('/dashboard/bookings');
+         navigate('/client/bookings');
 
       } catch (err) {
          toast.error(err.response?.data?.message || "Transmission failed.");
@@ -354,12 +354,12 @@ const ServiceDetails = () => {
             isOpen={paymentModal.open}
             onClose={() => {
                setPaymentModal({ open: false, booking: null });
-               navigate('/dashboard/bookings');
+               navigate('/client/bookings');
             }}
             onSuccess={() => {
                setPaymentModal({ open: false, booking: null });
                toast.success("Payment Secured! Booking request transmitted.");
-               navigate('/dashboard/bookings');
+               navigate('/client/bookings');
             }}
             bookingId={paymentModal.booking?._id}
             amount={service.price}

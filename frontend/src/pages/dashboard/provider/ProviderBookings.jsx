@@ -111,6 +111,7 @@ const ProviderBookings = () => {
             case 'pending review': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
             case 'completed': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'rejected': return 'bg-red-50 text-red-600 border-red-100';
+            case 'expired': return 'bg-rose-50 text-rose-600 border-rose-100';
             default: return 'bg-slate-50 text-slate-500 border-slate-100';
         }
     };
