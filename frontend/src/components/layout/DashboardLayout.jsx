@@ -90,29 +90,28 @@ const DashboardLayout = ({ children }) => {
   const getNavItems = () => {
     const rolePrefix = `/${user?.role}`;
     const shared = [
-      { label: 'Overview', icon: BarChart3, path: `${rolePrefix}/dashboard` },
+      { label: 'Dashboard', icon: BarChart3, path: `${rolePrefix}/dashboard` },
       { label: 'Bookings', icon: Calendar, path: `${rolePrefix}/bookings` },
       { label: 'Messages', icon: MessageSquare, path: `${rolePrefix}/messages` },
     ];
 
     const clientItems = [
-      { label: 'Map Discovery', icon: MapIcon, path: '/nearby' },
+      { label: 'Map Search', icon: MapIcon, path: '/nearby' },
       { label: 'Payments', icon: CreditCard, path: '/client/payments' },
     ];
 
     const providerItems = [
-      { label: 'My Services', icon: Briefcase, path: '/provider/services' },
+      { label: 'Services', icon: Briefcase, path: '/provider/services' },
       { label: 'Earnings', icon: DollarSign, path: '/provider/earnings' },
     ];
 
     const adminItems = [
-      { label: 'Platform Controls', icon: Shield, path: '/admin/dashboard' },
-      { label: 'Identity Directory', icon: Users, path: '/admin/users' },
-      { label: 'Service Domains', icon: Tag, path: '/admin/categories' },
-      { label: 'Verification Queue', icon: CheckCircle2, path: '/admin/verification-queue' },
-      { label: 'Secure Payments', icon: CreditCard, path: '/admin/payments' },
-      { label: 'Dispute Console', icon: AlertCircle, path: '/admin/disputes' },
-      { label: 'Network Map', icon: MapIcon, path: '/admin/map' },
+      { label: 'Users', icon: Users, path: '/admin/users' },
+      { label: 'Categories', icon: Tag, path: '/admin/categories' },
+      { label: 'Verifications', icon: CheckCircle2, path: '/admin/verification-queue' },
+      { label: 'Payments', icon: CreditCard, path: '/admin/payments' },
+      { label: 'Disputes', icon: AlertCircle, path: '/admin/disputes' },
+      { label: 'Map', icon: MapIcon, path: '/admin/map' },
     ];
 
     switch (user?.role) {
@@ -188,7 +187,7 @@ const DashboardLayout = ({ children }) => {
            </div>
 
            {/* Content Container */}
-           <main className="flex-1 pt-44 pb-24 md:pb-12 bg-[#F8FAFC]">
+           <main className="flex-1 pt-[140px] pb-24 md:pb-12 bg-[#F8FAFC]">
               <div className="max-w-7xl mx-auto px-8">
                  {children}
               </div>
@@ -319,7 +318,7 @@ const DashboardLayout = ({ children }) => {
                </div>
                
                {/* Notifications */}
-               <div className="relative">
+               <div>
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -336,19 +335,6 @@ const DashboardLayout = ({ children }) => {
                         </span>
                      )}
                   </Button>
-
-                  <NotificationModal 
-                    isOpen={showNotif} 
-                    onClose={() => setShowNotif(false)} 
-                    notifications={notifications}
-                    onMarkRead={markRead}
-                    onRefresh={() => {
-                        api.get('/notifications/my').then(res => {
-                            setNotifications(res.data.data);
-                            setUnreadCount(res.data.unreadCount);
-                        });
-                    }}
-                  />
                </div>
 
                <Button variant="ghost" size="icon" className="rounded-full">
@@ -368,6 +354,20 @@ const DashboardLayout = ({ children }) => {
       <ProfileModal 
         isOpen={isProfileModalOpen} 
         onClose={() => setIsProfileModalOpen(false)} 
+      />
+
+      {/* Admin/Provider Notification Modal */}
+      <NotificationModal 
+        isOpen={showNotif} 
+        onClose={() => setShowNotif(false)} 
+        notifications={notifications}
+        onMarkRead={markRead}
+        onRefresh={() => {
+            api.get('/notifications/my').then(res => {
+                setNotifications(res.data.data);
+                setUnreadCount(res.data.unreadCount);
+            });
+        }}
       />
     </div>
   );
