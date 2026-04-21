@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../../context/LocationContext';
 import api from '../../services/api';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, CheckCircle, XCircle, Clock, ShieldCheck, User as UserIcon, RefreshCw, Layers } from 'lucide-react';
+import { MapPin, CheckCircle, XCircle, Clock, ShieldCheck, User as UserIcon, RefreshCw, Layers, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Custom icons based on provider status
@@ -40,6 +41,7 @@ const userIcon = new L.Icon({
 });
 
 const AdminMap = () => {
+  const navigate = useNavigate();
   const { coords } = useLocation();
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,9 +66,7 @@ const AdminMap = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProviders();
-  }, []);
+  useEffect(() => { fetchProviders(); }, []);
 
   const handleUpdateProvider = async (id, updates) => {
     try {
@@ -80,13 +80,8 @@ const AdminMap = () => {
 
   const filteredProviders = useMemo(() => {
     return providers.filter(provider => {
-      // Must have valid coordinates
       if (!provider.location?.coordinates || provider.location.coordinates.length < 2) return false;
-
-      // Filter by Keyword
       if (filters.keyword && !provider.name.toLowerCase().includes(filters.keyword.toLowerCase())) return false;
-
-      // Filter by Status
       if (filters.status !== 'all') {
         const isApp = provider.isApproved;
         const stat = provider.status;
@@ -94,175 +89,170 @@ const AdminMap = () => {
         if (filters.status === 'unverified' && isApp) return false;
         if (filters.status === 'suspended' && stat !== 'suspended') return false;
       }
-
-      // Filter by Category
       if (filters.category !== 'all') {
         if (!provider.categories || !provider.categories.includes(filters.category)) return false;
       }
-
       return true;
     });
   }, [providers, filters]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-4 border-b border-slate-100/50">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Provider Network Map</h1>
-          <p className="text-slate-500 font-medium text-sm mt-1 mb-2">Real-time geographical overview of all task specialists.</p>
-          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div> Active ({providers.filter(p => p.status === 'active' && p.isApproved).length})</div>
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500"></div> Suspended ({providers.filter(p => p.status === 'suspended').length})</div>
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-400"></div> Unverified ({providers.filter(p => !p.isApproved && p.status !== 'suspended').length})</div>
-          </div>
+           <h1 className="text-4xl font-black text-slate-950 tracking-tighter leading-none uppercase">Provider Map</h1>
+           <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mt-4 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
+              Real-time Active Provider Locations
+           </p>
         </div>
 
-        <button
-          onClick={fetchProviders}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors text-xs font-black uppercase tracking-widest shadow-sm"
-        >
-          <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> Refresh Feed
-        </button>
+        <div className="flex items-center gap-6 bg-slate-100/50 p-4 rounded-[28px] border border-slate-100/50 backdrop-blur-md shadow-inner">
+           {[
+             { label: 'Active', count: providers.filter(p => p.status === 'active' && p.isApproved).length, color: 'bg-emerald-500' },
+             { label: 'Suspended', count: providers.filter(p => p.status === 'suspended').length, color: 'bg-rose-500' },
+             { label: 'Pending', count: providers.filter(p => !p.isApproved && p.status !== 'suspended').length, color: 'bg-slate-400' }
+           ].map((stat, i) => (
+             <div key={i} className="flex items-center gap-2.5">
+                <div className={`w-2.5 h-2.5 rounded-full ${stat.color} shadow-sm`}></div>
+                <div className="flex flex-col">
+                   <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">{stat.label}</span>
+                   <span className="text-[11px] font-black text-slate-950 leading-none">{stat.count}</span>
+                </div>
+             </div>
+           ))}
+           <div className="h-8 w-px bg-slate-200/50 mx-2"></div>
+           <button
+             onClick={fetchProviders}
+             className="w-10 h-10 bg-white rounded-2xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-950 hover:bg-slate-50 transition-all shadow-sm active:scale-90"
+           >
+             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+           </button>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search provider name or ID..."
-          className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium w-full md:w-1/3 shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
-          value={filters.keyword}
-          onChange={(e) => setFilters(p => ({ ...p, keyword: e.target.value }))}
-        />
-        <select
-          className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium w-full md:w-1/4 shadow-sm outline-none focus:border-blue-500 cursor-pointer"
-          value={filters.status}
-          onChange={(e) => setFilters(p => ({ ...p, status: e.target.value }))}
-        >
-          <option value="all">All Statuses</option>
-          <option value="active">Active & Verified</option>
-          <option value="unverified">Pending Approval</option>
-          <option value="suspended">Suspended</option>
-        </select>
-        <select
-          className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium w-full md:w-1/4 shadow-sm outline-none focus:border-blue-500 cursor-pointer"
-          value={filters.category}
-          onChange={(e) => setFilters(p => ({ ...p, category: e.target.value }))}
-        >
-          <option value="all">All Categories</option>
-          {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
-        </select>
+      {/* Analysis Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-white/50 p-2 rounded-[3rem] border border-slate-100 shadow-sm backdrop-blur-sm">
+        <div className="relative col-span-2 group/search">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within/search:text-blue-600 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search providers..."
+              className="w-full bg-white border border-slate-100 rounded-[2rem] py-4 pl-14 pr-6 text-[11px] font-black uppercase tracking-widest text-slate-950 outline-none focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm"
+              value={filters.keyword}
+              onChange={(e) => setFilters(p => ({ ...p, keyword: e.target.value }))}
+            />
+        </div>
+        <div className="relative group/status flex items-center">
+            <ShieldCheck className="absolute left-6 w-4 h-4 text-slate-300 group-focus-within/status:text-blue-600 transition-colors pointer-events-none" />
+            <select
+              className="w-full bg-white border border-slate-100 rounded-[2rem] py-4 pl-14 pr-6 text-[10px] font-black uppercase tracking-widest text-slate-950 outline-none focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm appearance-none cursor-pointer"
+              value={filters.status}
+              onChange={(e) => setFilters(p => ({ ...p, status: e.target.value }))}
+            >
+              <option value="all">Status</option>
+              <option value="active">Active</option>
+              <option value="unverified">Pending Approval</option>
+              <option value="suspended">Suspended</option>
+            </select>
+        </div>
+        <div className="relative group/cat flex items-center">
+            <Layers className="absolute left-6 w-4 h-4 text-slate-300 group-focus-within/cat:text-blue-600 transition-colors pointer-events-none" />
+            <select
+              className="w-full bg-white border border-slate-100 rounded-[2rem] py-4 pl-14 pr-6 text-[10px] font-black uppercase tracking-widest text-slate-950 outline-none focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm appearance-none cursor-pointer"
+              value={filters.category}
+              onChange={(e) => setFilters(p => ({ ...p, category: e.target.value }))}
+            >
+               <option value="all">Skill Category</option>
+              {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+            </select>
+        </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden relative h-[650px]">
+      {/* Immersion Map Environment */}
+      <div className="bg-white rounded-[4rem] border-4 border-white shadow-[0_40px_120px_-20px_rgba(30,58,138,0.12)] overflow-hidden h-[700px] relative">
         {loading && (
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <div className="text-sm font-black text-slate-800 tracking-widest uppercase">Aggregating Nodes...</div>
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-md z-[1000] flex flex-col items-center justify-center animate-in fade-in duration-500">
+            <div className="w-16 h-16 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mb-6"></div>
+            <div className="text-[11px] font-black text-slate-950 tracking-[0.4em] uppercase">Loading Map...</div>
           </div>
         )}
-        <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="h-full w-full outline-none z-0">
+        <MapContainer center={mapCenter} zoom={13} scrollWheelZoom={true} className="h-full w-full outline-none z-0">
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            attribution='&copy; OSM'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
 
-          <Marker position={mapCenter} icon={userIcon}>
-            <Popup className="font-sans">
-              <div className="text-center p-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  {coords ? 'Your Admin Console' : 'Core Target Area'}
-                </span>
-              </div>
-            </Popup>
-          </Marker>
-
           <MarkerClusterGroup chunkedLoading>
             {filteredProviders.map(provider => {
-              // Mongo coords: [lng, lat]
               const position = [provider.location.coordinates[1], provider.location.coordinates[0]];
               const icon = getStatusIcon(provider.status, provider.isApproved);
               const isFullyActive = provider.isApproved && provider.status === 'active';
 
               return (
                 <Marker key={provider._id} position={position} icon={icon}>
-                  <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent className="bg-transparent border-0 shadow-none p-0 m-0 text-center">
-                    <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-200 shadow-xl whitespace-nowrap text-slate-800 flex flex-col items-center">
-                      <span className="text-[11px] font-black leading-tight truncate max-w-[150px]">{provider.name}</span>
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-tight">{provider.categories?.length ? provider.categories[0] : 'Professional'}</span>
-                    </div>
-                  </Tooltip>
-                  <Popup className="font-sans min-w-[280px]">
-                    <div className="p-1">
-                      <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100">
-                        {provider.profilePicture && provider.profilePicture !== 'default.jpg' ? (
-                          <img src={provider.profilePicture} alt="Profile" className="w-12 h-12 rounded-xl object-cover border border-slate-200" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
-                            <UserIcon className="w-6 h-6 text-slate-400" />
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="font-black text-slate-900 text-sm m-0 leading-tight">{provider.name}</h3>
-                          <p className="text-[10px] font-bold text-slate-500 truncate max-w-[150px] m-0 leading-tight">{provider.email}</p>
-                          <div className="flex mt-1">
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${provider.status === 'suspended' ? 'bg-red-100 text-red-600' :
-                                !provider.isApproved ? 'bg-slate-100 text-slate-500' : 'bg-green-100 text-green-600'
-                              }`}>
-                              {provider.status === 'suspended' ? 'Suspended' : (!provider.isApproved ? 'Pending Verification' : 'Active')}
-                            </span>
-                          </div>
+                  <Popup className="premium-popup">
+                    <div className="w-[300px] p-4 bg-white rounded-[2rem] overflow-hidden">
+                      <div className="flex items-center gap-4 mb-6 relative">
+                        <div className="relative w-14 h-14 shrink-0">
+                           <div className="absolute inset-0 bg-slate-900/5 rounded-2xl rotate-6 transition-transform group-hover:rotate-12"></div>
+                           {provider.profilePicture && provider.profilePicture !== 'default.jpg' ? (
+                             <img src={provider.profilePicture} alt="Profile" className="relative w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-sm" />
+                           ) : (
+                             <div className="relative w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center border-2 border-white shadow-sm">
+                               <UserIcon className="w-6 h-6 text-slate-300" />
+                             </div>
+                           )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-black text-slate-950 text-sm leading-tight tracking-tight uppercase truncate m-0">{provider.name}</h3>
+                          <p className="text-[10px] font-bold text-slate-400 truncate m-0 italic mt-1">{provider.email}</p>
                         </div>
                       </div>
 
-                      <div className="space-y-2 mb-3">
-                        <div className="flex items-center gap-2 text-xs">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="text-slate-600 truncate">{provider.location.address || 'Location registered automatically'}</span>
+                      <div className="space-y-3 mb-8 bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                        <div className="flex items-start gap-3">
+                          <MapPin className="w-3.5 h-3.5 text-blue-600 mt-0.5 shrink-0" /> 
+                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter leading-relaxed">{provider.location.address || 'Active Location'}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <Layers className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="text-slate-600 truncate">{provider.categories?.length ? provider.categories.join(', ') : 'No exact services listed'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="text-slate-600">Since {new Date(provider.createdAt).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-3">
+                          <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" /> 
+                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none">{provider.categories?.[0] || 'Provider'}</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 mt-4">
+                      <div className="grid grid-cols-1 gap-2">
                         {provider.status === 'suspended' ? (
                           <button
                             onClick={() => handleUpdateProvider(provider._id, { status: 'active' })}
-                            className="col-span-2 bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            className="bg-slate-950 text-white p-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 hover:bg-emerald-600 transition-all active:scale-95"
                           >
-                            Restore Account
+                            Restore User
                           </button>
                         ) : (
-                          <>
-                            <button
-                              onClick={() => handleUpdateProvider(provider._id, { status: 'suspended' })}
-                              className="bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 border border-red-100"
-                            >
-                              <XCircle className="w-3 h-3" /> Suspend
-                            </button>
-
-                            {!isFullyActive ? (
-                              <button
-                                onClick={() => handleUpdateProvider(provider._id, { isApproved: true, status: 'active' })}
-                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 border border-emerald-100"
-                              >
-                                <ShieldCheck className="w-3 h-3" /> Verify & Approve
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleUpdateProvider(provider._id, { isApproved: false })}
-                                className="bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 border border-slate-200"
-                              >
-                                Revoke ID
-                              </button>
+                          <div className="flex gap-2">
+                            {!isFullyActive && (
+                                <button
+                                  onClick={() => handleUpdateProvider(provider._id, { isApproved: true, status: 'active' })}
+                                  className="flex-1 bg-emerald-600 text-white p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-600/20 active:scale-95 hover:bg-slate-950 transition-all"
+                                >
+                                  Verify
+                                </button>
                             )}
-                          </>
+                            <button
+                               onClick={() => handleUpdateProvider(provider._id, { status: 'suspended' })}
+                               className="flex-1 bg-white border-2 border-slate-100 text-rose-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-rose-100 active:scale-95 transition-all"
+                            >
+                               Suspend
+                            </button>
+                          </div>
                         )}
+                        <button 
+                          onClick={() => navigate(`/admin/messages?to=${provider._id}`)}
+                          className="w-full bg-slate-50 text-slate-400 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all active:scale-95 border border-slate-100"
+                        >
+                          Send Message
+                        </button>
                       </div>
                     </div>
                   </Popup>

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Camera, X, Loader2, UploadCloud } from 'lucide-react';
 import api from '../../services/api';
 
@@ -8,6 +8,10 @@ const ImageUpload = ({ onUploadSuccess, currentImage = null, label = "Upload Ima
   const [preview, setPreview] = useState(currentImage);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreview(currentImage);
+  }, [currentImage]);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];

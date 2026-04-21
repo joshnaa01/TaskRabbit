@@ -6,12 +6,12 @@ import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import ImageUpload from '../../components/common/ImageUpload';
-import { 
-  UserPlus, 
-  Navigation, 
-  Info, 
-  Mail, 
-  Lock, 
+import {
+  UserPlus,
+  Navigation,
+  Info,
+  Mail,
+  Lock,
   User as UserIcon,
   AlertCircle,
   Eye,
@@ -19,13 +19,13 @@ import {
 } from 'lucide-react';
 
 const Register = () => {
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    email: '', 
-    password: '', 
-    role: 'client', 
-    lat: '', 
-    lng: '', 
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'client',
+    lat: '',
+    lng: '',
     profilePicture: '',
     citizenshipDocument: '',
     workDocument: ''
@@ -54,10 +54,10 @@ const Register = () => {
     setLocationStatus('detecting');
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setFormData(prev => ({ 
-          ...prev, 
-          lat: position.coords.latitude, 
-          lng: position.coords.longitude 
+        setFormData(prev => ({
+          ...prev,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
         }));
         setLocationStatus('captured');
       },
@@ -94,7 +94,14 @@ const Register = () => {
       toast.success("Account created successfully! Welcome to TaskRabbit.");
       navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed';
+      let msg = 'Registration failed';
+      if (!err.response) {
+        msg = 'Server problem - connection unstable';
+      } else if (err.response.status >= 500) {
+        msg = 'Server problem - please try again later';
+      } else {
+        msg = err.response.data?.message || 'Registration failed';
+      }
       setError(msg);
       toast.error(msg);
     } finally {
@@ -107,26 +114,26 @@ const Register = () => {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 py-12">
       <div className="w-full max-w-[480px] bg-white rounded-[40px] shadow-2xl shadow-blue-900/5 p-8 lg:p-12 border border-slate-100 animate-in fade-in zoom-in duration-500">
         <div className="text-center mb-8">
-           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create Account</h2>
-           <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-2">Join our service network today</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create Account</h2>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-2">Join our service network today</p>
         </div>
 
         {/* Role Switcher */}
         <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
-           <button 
-            type="button" 
-            onClick={() => setFormData({...formData, role: 'client'})} 
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, role: 'client' })}
             className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.role === 'client' ? 'bg-white shadow-lg text-blue-600' : 'text-slate-500'}`}
-           >
-             I'm a Client
-           </button>
-           <button 
-            type="button" 
-            onClick={() => setFormData({...formData, role: 'provider'})} 
+          >
+            I'm a Client
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, role: 'provider' })}
             className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.role === 'provider' ? 'bg-white shadow-lg text-blue-600' : 'text-slate-500'}`}
-           >
-             I'm a Provider
-           </button>
+          >
+            I'm a Provider
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -134,22 +141,22 @@ const Register = () => {
           {formData.role === 'provider' && (
             <div className="flex flex-col gap-4 mb-2">
               <div className="w-full">
-                 <ImageUpload 
-                   label="Profile Picture"
-                   onUploadSuccess={(url) => setFormData({...formData, profilePicture: url})}
-                 />
+                <ImageUpload
+                  label="Profile Picture"
+                  onUploadSuccess={(url) => setFormData({ ...formData, profilePicture: url })}
+                />
               </div>
               <div className="w-full">
-                 <ImageUpload 
-                   label="Citizenship Document"
-                   onUploadSuccess={(url) => setFormData({...formData, citizenshipDocument: url})}
-                 />
+                <ImageUpload
+                  label="Citizenship Document"
+                  onUploadSuccess={(url) => setFormData({ ...formData, citizenshipDocument: url })}
+                />
               </div>
               <div className="w-full">
-                 <ImageUpload 
-                   label="Work Document"
-                   onUploadSuccess={(url) => setFormData({...formData, workDocument: url})}
-                 />
+                <ImageUpload
+                  label="Work Document"
+                  onUploadSuccess={(url) => setFormData({ ...formData, workDocument: url })}
+                />
               </div>
             </div>
           )}
@@ -158,40 +165,40 @@ const Register = () => {
           {/* Inline Geolocation Status for Providers */}
           {formData.role === 'provider' && (
             <div className={`p-4 rounded-2xl border transition-all ${locationStatus === 'captured' ? 'bg-emerald-50 border-emerald-100' : 'bg-blue-50 border-blue-100'}`}>
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <Navigation className={`w-4 h-4 ${locationStatus === 'detecting' ? 'animate-spin text-blue-600' : 'text-blue-400'}`} />
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
-                       {locationStatus === 'captured' ? 'Location Secured ✅' : 'Area Verification'}
-                     </span>
-                  </div>
-                  {locationStatus === 'error' && (
-                    <button type="button" onClick={detectLocation} className="text-[10px] font-black text-blue-600 uppercase underline">Retry</button>
-                  )}
-               </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Navigation className={`w-4 h-4 ${locationStatus === 'detecting' ? 'animate-spin text-blue-600' : 'text-blue-400'}`} />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                    {locationStatus === 'captured' ? 'Location Secured ✅' : 'Area Verification'}
+                  </span>
+                </div>
+                {locationStatus === 'error' && (
+                  <button type="button" onClick={detectLocation} className="text-[10px] font-black text-blue-600 uppercase underline">Retry</button>
+                )}
+              </div>
             </div>
           )}
 
           <div className="space-y-4">
-            <Input 
-              label="Full Name" 
+            <Input
+              label="Full Name"
               icon={<UserIcon className="w-4 h-4" />}
-              placeholder="Ex. Girindra" 
+              placeholder="Ex. Girindra"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               className="h-14 rounded-2xl"
             />
-            
+
             <div className="relative">
-              <Input 
-                label="Email Address" 
+              <Input
+                label="Email Address"
                 icon={<Mail className="w-4 h-4" />}
                 type="email"
-                placeholder="name@email.com" 
+                placeholder="name@email.com"
                 value={formData.email}
                 onFocus={() => setEmailFocus(true)}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
                 className="h-14 rounded-2xl"
               />
@@ -203,33 +210,33 @@ const Register = () => {
             </div>
 
             <div className="relative">
-              <Input 
-                label="Password" 
+              <Input
+                label="Password"
                 icon={<Lock className="w-4 h-4" />}
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••" 
+                placeholder="••••••••"
                 value={formData.password}
                 onFocus={() => setPasswordFocus(true)}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 className="h-14 rounded-2xl pr-12"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-11 p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-               {passwordFocus && formData.password && (
+              {passwordFocus && formData.password && (
                 <div className="absolute -bottom-5 left-1 right-1 flex items-center gap-2">
                   <div className="flex-1 h-1 flex gap-0.5">
-                     <div className={`flex-1 rounded-full ${formData.password.length >= 4 ? 'bg-amber-400' : 'bg-slate-200'}`}></div>
-                     <div className={`flex-1 rounded-full ${formData.password.length >= 6 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                     <div className={`flex-1 rounded-full ${formData.password.length >= 10 ? 'bg-emerald-600' : 'bg-slate-200'}`}></div>
+                    <div className={`flex-1 rounded-full ${formData.password.length >= 4 ? 'bg-amber-400' : 'bg-slate-200'}`}></div>
+                    <div className={`flex-1 rounded-full ${formData.password.length >= 6 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+                    <div className={`flex-1 rounded-full ${formData.password.length >= 10 ? 'bg-emerald-600' : 'bg-slate-200'}`}></div>
                   </div>
                   <span className="text-[9px] font-black text-slate-400 uppercase">
-                     {formData.password.length < 6 ? 'Weak' : 'Strong'}
+                    {formData.password.length < 6 ? 'Weak' : 'Strong'}
                   </span>
                 </div>
               )}
@@ -243,11 +250,11 @@ const Register = () => {
               </div>
             )}
 
-            <Button 
-               type="submit" 
-               size="lg" 
-               className="w-full h-14 rounded-2xl shadow-xl shadow-blue-600/10" 
-               disabled={loading || (formData.role === 'provider' && locationStatus !== 'captured')}
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-14 rounded-2xl shadow-xl shadow-blue-600/10"
+              disabled={loading || (formData.role === 'provider' && locationStatus !== 'captured')}
             >
               {loading ? 'Processing...' : (
                 <span className="flex items-center gap-2 uppercase tracking-widest text-xs font-black">

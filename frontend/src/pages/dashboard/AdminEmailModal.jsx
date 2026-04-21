@@ -79,9 +79,9 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                                {isEmailArray ? 'Mass Notification' : formData.to === 'all' ? 'Mass Broadcast' : 'Direct Message'}
+                                {isEmailArray ? 'Send Email' : formData.to === 'all' ? 'Broadcast Email' : 'Email User'}
                             </h2>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Administrator Communication Terminal</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Admin Email Panel</p>
                         </div>
                     </div>
                     <button
@@ -97,7 +97,7 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Target Selection */}
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Recipient Target</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Recipient</label>
                             <div className="relative">
                                 <select
                                     className="w-full bg-slate-50 text-slate-900 border border-slate-100 rounded-2xl p-4 text-xs font-bold appearance-none outline-none focus:ring-4 focus:ring-blue-600/5 transition-all"
@@ -113,11 +113,11 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
                                         }
                                     }}
                                 >
-                                    <option value="all">Every Account</option>
-                                    <option value="client">All Clients</option>
-                                    <option value="provider">All Providers</option>
-                                    {isEmailArray && <option value="selection">Current Selection ({initialTarget.length})</option>}
-                                    <option value="individual">Specific Email Address</option>
+                                    <option value="all">All Users</option>
+                                    <option value="client">Clients</option>
+                                    <option value="provider">Providers</option>
+                                    {isEmailArray && <option value="selection">Selected Users ({initialTarget.length})</option>}
+                                    <option value="individual">Specific Email</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                             </div>
@@ -125,14 +125,14 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
 
                         {/* Template Selection */}
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Mail Template</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Template</label>
                             <div className="relative">
                                 <select
                                     className="w-full bg-slate-900 text-white border-0 rounded-2xl p-4 text-xs font-bold appearance-none outline-none focus:ring-4 focus:ring-blue-600/20 transition-all cursor-pointer"
                                     value={selectedTemplate}
                                     onChange={(e) => handleTemplateChange(e.target.value)}
                                 >
-                                    <option value="custom">Custom Format</option>
+                                    <option value="custom">Custom</option>
                                     <option value="maintenance">Maintenance Notice</option>
                                     <option value="policy_update">Policy Update</option>
                                     <option value="provider_welcome">Provider Welcome</option>
@@ -160,7 +160,7 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
 
                     {/* Subject */}
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Broadcast Subject</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Subject</label>
                         <input
                             type="text"
                             placeholder="System Maintenance Announcement..."
@@ -173,7 +173,7 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
 
                     {/* Message Body */}
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Message Payload (HTML Supported)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Message</label>
                         <textarea
                             placeholder="Write your message here. Newlines will be converted to paragraph breaks automatically."
                             className="w-full bg-slate-50 text-slate-900 border border-slate-100 rounded-[32px] p-6 text-xs font-bold outline-none focus:ring-4 focus:ring-blue-600/5 transition-all min-h-[200px] resize-none"
@@ -190,7 +190,7 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
                             onClick={onClose}
                             className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-200 transition-all"
                         >
-                            Abort Changes
+                            Cancel
                         </button>
                         <button
                             type="submit"
@@ -200,11 +200,11 @@ const AdminEmailModal = ({ isOpen, onClose, initialTarget = 'all' }) => {
                             {sending ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                    Synchronizing...
+                                    Sending...
                                 </>
                             ) : (
                                 <>
-                                    <Send className="w-4 h-4" /> Initiating Transfer
+                                    <Send className="w-4 h-4" /> Send Email
                                 </>
                             )}
                         </button>

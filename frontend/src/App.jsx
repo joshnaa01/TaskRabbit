@@ -3,6 +3,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocationProvider } from './context/LocationContext';
 import { Toaster } from 'sonner';
 
+// Components
+import Chatbot from './components/common/Chatbot';
+
 // Layouts
 import PublicLayout from './components/layout/PublicLayout.jsx';
 import DashboardLayout from './components/layout/DashboardLayout.jsx';
@@ -17,6 +20,7 @@ import HowItWorks from './pages/public/HowItWorks';
 import Contact from './pages/public/Contact';
 import NearbyTechnicians from './pages/public/NearbyTechnicians';
 
+import { ArrowRight } from 'lucide-react';
 // Dashboard Pages
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import BookingsTable from './pages/dashboard/BookingsTable';
@@ -54,6 +58,15 @@ const GuestRoute = ({ children }) => {
   return children;
 };
 
+// Protect public routes from being accessed by non-clients (e.g. providers)
+const ClientOrGuestRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (user && user.role === 'provider') return <Navigate to="/provider/dashboard" replace />;
+  if (user && user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  return children;
+};
+
 // Dynamic Dashboard Layout Wrapper
 const DynamicLayout = ({ children }) => {
   return <DashboardLayout>{children}</DashboardLayout>;
@@ -77,13 +90,13 @@ function App() {
         <Router>
           <Routes>
 
-            {/* PUBLIC */}
-            <Route path="/" element={<PublicLayout noContainer><Home /></PublicLayout>} />
-            <Route path="/search" element={<PublicLayout noContainer><SearchPage /></PublicLayout>} />
-            <Route path="/service/:id" element={<PublicLayout noContainer><ServiceDetails /></PublicLayout>} />
-            <Route path="/how-it-works" element={<PublicLayout noContainer><HowItWorks /></PublicLayout>} />
-            <Route path="/nearby" element={<PublicLayout noContainer><NearbyTechnicians /></PublicLayout>} />
-            <Route path="/contact" element={<PublicLayout noContainer><Contact /></PublicLayout>} />
+            {/* PUBLIC / CLIENT ONLY */}
+            <Route path="/" element={<PublicLayout noContainer><ClientOrGuestRoute><Home /></ClientOrGuestRoute></PublicLayout>} />
+            <Route path="/search" element={<PublicLayout noContainer><ClientOrGuestRoute><SearchPage /></ClientOrGuestRoute></PublicLayout>} />
+            <Route path="/service/:id" element={<PublicLayout noContainer><ClientOrGuestRoute><ServiceDetails /></ClientOrGuestRoute></PublicLayout>} />
+            <Route path="/how-it-works" element={<PublicLayout noContainer><ClientOrGuestRoute><HowItWorks /></ClientOrGuestRoute></PublicLayout>} />
+            <Route path="/nearby" element={<PublicLayout noContainer><ClientOrGuestRoute><NearbyTechnicians /></ClientOrGuestRoute></PublicLayout>} />
+            <Route path="/contact" element={<PublicLayout noContainer><ClientOrGuestRoute><Contact /></ClientOrGuestRoute></PublicLayout>} />
 
             {/* GUEST ONLY */}
             <Route path="/login" element={<PublicLayout noContainer><GuestRoute><Login /></GuestRoute></PublicLayout>} />
@@ -129,6 +142,7 @@ function App() {
             {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <Chatbot />
         </Router>
       </LocationProvider>
     </AuthProvider>

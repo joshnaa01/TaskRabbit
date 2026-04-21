@@ -144,203 +144,231 @@ const AddService = () => {
     const prevStep = () => setCurrentStep(prev => prev - 1);
 
     return (
-        <div className="max-w-3xl mx-auto pb-16">
-            {/* Header Area */}
-            <div className="flex items-center gap-6 mb-12">
+        <div className="max-w-4xl mx-auto pb-24 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            {/* Provisioning Header Area */}
+            <div className="flex flex-col lg:flex-row lg:items-center gap-10 mb-16 pb-8 border-b border-slate-100/50">
                 <button
                     onClick={() => navigate('/provider/services')}
-                    className="p-4 bg-white rounded-3xl border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:shadow-xl hover:shadow-blue-900/5 transition-all"
+                    className="w-16 h-16 shrink-0 bg-white rounded-[2rem] border border-slate-100 text-slate-300 hover:text-slate-950 hover:bg-slate-50 hover:border-slate-200 hover:shadow-2xl hover:shadow-slate-900/5 transition-all duration-500 flex items-center justify-center active:scale-90 group/back"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-6 h-6 group-hover/back:-translate-x-1 transition-transform" />
                 </button>
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none mb-3">{id ? 'Edit Service' : 'Launch New Service'}</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">{id ? 'Update Existing Service Profile' : `Step ${currentStep} of 3 — Profile Architecture`}</p>
+                <div className="flex-1">
+                    <h1 className="text-5xl font-black text-slate-950 tracking-tighter leading-none uppercase italic mb-4">{id ? 'Update Asset' : 'Register Node'}</h1>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                           <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{id ? 'Operational Update Protocol' : `Provisioning Step ${currentStep} of 3 — Node Architecture`}</p>
+                        </div>
+                        {id && (
+                           <span className="px-3 py-1 bg-slate-950 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">Live Record</span>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Progress Stepper */}
+            {/* Tactical Progress Stepper */}
             {!id && (
-                <div className="flex gap-4 mb-12">
+                <div className="flex gap-6 mb-16 px-2">
                     {[1, 2, 3].map((step) => (
-                        <div key={step} className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden relative border border-slate-50 shadow-inner">
-                            <div
-                                className={`absolute inset-0 bg-blue-600 transition-all duration-700 ease-out ${currentStep >= step ? 'translate-x-0' : '-translate-x-full'}`}
-                            />
+                        <div key={step} className="flex-1 space-y-3 group/step">
+                            <div className="flex justify-between items-center px-1">
+                               <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors duration-500 ${currentStep >= step ? 'text-blue-600' : 'text-slate-200'}`}>0{step}</span>
+                               <span className={`text-[9px] font-black uppercase tracking-widest transition-opacity duration-500 ${currentStep === step ? 'opacity-100' : 'opacity-0'}`}>Processing...</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-slate-100/50 overflow-hidden relative ring-1 ring-slate-100 shadow-inner">
+                                <div
+                                    className={`absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(37,99,235,0.3)] ${currentStep >= step ? 'translate-x-0' : '-translate-x-full'}`}
+                                />
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* Form Container */}
-            <form onSubmit={handleSubmit} className="space-y-12">
+            {/* Matrix Form Container */}
+            <form onSubmit={handleSubmit} className="space-y-16">
 
-                {/* STEP 1: IDENTITY & CORE */}
+                {/* STEP 1: IDENTITY & CORE ARCHITECTURE */}
                 {(currentStep === 1 || id) && (
-                    <div className="bg-white rounded-[32px] border border-slate-50 shadow-2xl shadow-blue-900/5 p-8 space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                                <Info className="w-6 h-6" />
+                    <div className="bg-white rounded-[4rem] border border-slate-100 shadow-[0_48px_100px_-20px_rgba(30,58,138,0.06)] p-16 space-y-12 animate-in fade-in slide-in-from-right-12 duration-1000 ring-1 ring-slate-100/50">
+                        <div className="flex items-center gap-6 mb-8">
+                            <div className="w-16 h-16 bg-blue-50/50 border border-blue-100 rounded-[2rem] flex items-center justify-center text-blue-600 shadow-inner">
+                                <Info className="w-8 h-8" />
                             </div>
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Identity & Category</h2>
+                            <div>
+                               <h2 className="text-2xl font-black text-slate-950 tracking-tighter uppercase italic">Core Identity</h2>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Initialize primary node descriptors</p>
+                            </div>
                         </div>
 
-                        <div className="space-y-8">
+                        <div className="space-y-12">
                             {/* Service Title */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Descriptive Title</label>
-                                <div className="relative group">
-                                    <AlignLeft className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-600 transition-colors" />
+                            <div className="space-y-5 group/input">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4 group-focus-within/input:text-blue-600 transition-colors">Strategic Label</label>
+                                <div className="relative">
+                                    <div className="absolute left-8 top-1/2 -translate-y-1/2 p-2 bg-slate-50 group-focus-within/input:bg-blue-600 group-focus-within/input:text-white rounded-xl text-slate-300 transition-all duration-500">
+                                       <AlignLeft className="w-6 h-6" />
+                                    </div>
                                     <input
                                         type="text"
                                         name="title"
                                         value={formData.title}
                                         onChange={handleChange}
-                                        placeholder="e.g. Professional Sofa Deep Cleaning"
-                                        className="w-full bg-slate-50 border-2 border-transparent rounded-[24px] py-5 pl-16 pr-8 text-sm font-bold focus:bg-white focus:border-blue-600/20 focus:ring-4 focus:ring-blue-600/5 transition-all outline-none"
+                                        placeholder="Enter high-impact service title..."
+                                        className="w-full h-20 bg-slate-50 border-2 border-transparent rounded-[2.5rem] py-5 pl-24 pr-10 text-base font-black text-slate-950 focus:bg-white focus:border-blue-600 transition-all duration-500 outline-none shadow-inner placeholder:text-slate-300"
                                     />
                                 </div>
                             </div>
 
                             {/* Description */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Executive Summary</label>
+                            <div className="space-y-5 group/text">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4 group-focus-within/text:text-blue-600 transition-colors">Executive Narrative</label>
                                 <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
-                                    rows="4"
-                                    placeholder="Describe the value proposition, process, and tools used..."
-                                    className="w-full bg-slate-50 border-2 border-transparent rounded-[32px] p-8 text-sm font-bold focus:bg-white focus:border-blue-600/20 focus:ring-4 focus:ring-blue-600/5 transition-all outline-none leading-relaxed"
+                                    rows="5"
+                                    placeholder="Describe operational mission parameters, technical requirements, and core value propositions..."
+                                    className="w-full bg-slate-50 border-2 border-transparent rounded-[3.5rem] p-12 text-base font-bold text-slate-950 focus:bg-white focus:border-blue-600 transition-all duration-700 outline-none leading-relaxed italic shadow-inner placeholder:text-slate-300 min-h-[220px]"
                                 />
                             </div>
 
-                            {/* Category Select */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Infrastructure Category</label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {/* Category Select Matrix */}
+                            <div className="space-y-6">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4">Marketplace Logic Dock</label>
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     {categories.map(cat => (
                                         <button
                                             key={cat._id}
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, categoryId: cat._id }))}
-                                            className={`p-6 rounded-[24px] border-2 transition-all flex flex-col items-center gap-3 group
+                                            className={`p-10 rounded-[2.5rem] border-2 transition-all duration-700 flex flex-col items-center gap-5 group/cat relative overflow-hidden
                                          ${formData.categoryId === cat._id
-                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20'
-                                                    : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-slate-900 hover:shadow-lg hover:shadow-blue-900/5'}
+                                                    ? 'bg-slate-950 border-slate-950 text-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]'
+                                                    : 'bg-white border-slate-50 text-slate-300 hover:border-blue-100 hover:text-slate-950 hover:bg-slate-50'}
                                        `}
                                         >
-                                            <Tag className={`w-6 h-6 ${formData.categoryId === cat._id ? 'text-white' : 'text-slate-300 group-hover:text-blue-600'} transition-colors`} />
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-center">{cat.name}</span>
+                                            <div className={`p-4 rounded-2xl transition-all duration-700 ${formData.categoryId === cat._id ? 'bg-white/10' : 'bg-slate-50 group-hover/cat:bg-white'}`}>
+                                               <Tag className={`w-8 h-8 transition-transform duration-700 ${formData.categoryId === cat._id ? 'text-blue-400 rotate-12' : 'text-slate-200 group-hover/cat:text-blue-600'}`} />
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-center leading-tight">{cat.name}</span>
+                                            {formData.categoryId === cat._id && (
+                                                <div className="absolute top-4 right-4 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="pt-8 flex justify-end">
-                            {!id && (
-                                <Button
+                        {!id && (
+                            <div className="pt-12 flex justify-end">
+                                <button
                                     type="button"
                                     onClick={nextStep}
                                     disabled={!formData.title || !formData.description || !formData.categoryId}
-                                    className="px-10 py-5 rounded-[24px] font-black text-[12px] uppercase tracking-widest flex items-center gap-3"
+                                    className="h-20 px-12 bg-slate-950 hover:bg-blue-600 text-white rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.4em] flex items-center gap-6 transition-all duration-700 disabled:opacity-20 shadow-2xl shadow-slate-950/20 active:scale-95 group/next"
                                 >
-                                    Configure Pricing <ChevronRight className="w-5 h-5" />
-                                </Button>
-                            )}
-                        </div>
+                                    Proceed to Logistics 
+                                    <ChevronRight className="w-6 h-6 group-hover/next:translate-x-2 transition-transform duration-500" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* STEP 2: LOGISTICS & COMMERCE */}
+                {/* STEP 2: LOGISTICS & FINANCIAL PROTOCOL */}
                 {(currentStep === 2 || id) && (
-                    <div className="bg-white rounded-[32px] border border-slate-50 shadow-2xl shadow-blue-900/5 p-8 space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
-                                <DollarSign className="w-6 h-6" />
+                    <div className="bg-white rounded-[4rem] border border-slate-100 shadow-[0_48px_100px_-20px_rgba(30,58,138,0.06)] p-16 space-y-16 animate-in fade-in slide-in-from-right-12 duration-1000 ring-1 ring-slate-100/50">
+                        <div className="flex items-center gap-6 mb-8">
+                            <div className="w-16 h-16 bg-slate-950 rounded-[2rem] flex items-center justify-center text-white shadow-xl">
+                                <DollarSign className="w-8 h-8" />
                             </div>
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Logistics & Revenue Model</h2>
+                            <div>
+                               <h2 className="text-2xl font-black text-slate-950 tracking-tighter uppercase italic">Logistics & Yield</h2>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Configure deployment & revenue models</p>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                            {/* Service Type */}
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Deployment Strategy</label>
+                            {/* Deployment Strategy */}
+                            <div className="space-y-6">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4">Deployment Vector</label>
                                 <div className="flex gap-4">
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, serviceType: 'onsite' }))}
-                                        className={`flex-1 p-6 rounded-[32px] border-2 flex flex-col items-center gap-4 transition-all
+                                        className={`flex-1 p-10 rounded-[3rem] border-2 flex flex-col items-center gap-6 transition-all duration-700 overflow-hidden relative group/deploy
                                        ${formData.serviceType === 'onsite'
-                                                ? 'bg-slate-900 border-slate-900 text-white shadow-2xl'
-                                                : 'bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-100'}
+                                                ? 'bg-slate-950 border-slate-950 text-white shadow-2xl scale-105'
+                                                : 'bg-slate-50 border-transparent text-slate-300 hover:bg-white hover:border-slate-100'}
                                      `}
                                     >
-                                        <div className={`p-4 rounded-2xl ${formData.serviceType === 'onsite' ? 'bg-white/10' : 'bg-white'}`}>
-                                            <Truck className="w-6 h-6" />
+                                        <div className={`p-6 rounded-2xl transition-all duration-700 ${formData.serviceType === 'onsite' ? 'bg-white/10' : 'bg-white group-hover/deploy:bg-slate-50'}`}>
+                                            <Truck className="w-10 h-10" />
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">On-site Help</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-center">Localized Hub</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, serviceType: 'remote' }))}
-                                        className={`flex-1 p-6 rounded-[32px] border-2 flex flex-col items-center gap-4 transition-all
+                                        className={`flex-1 p-10 rounded-[3rem] border-2 flex flex-col items-center gap-6 transition-all duration-700 overflow-hidden relative group/deploy
                                        ${formData.serviceType === 'remote'
-                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xl'
-                                                : 'bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-100'}
+                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xl scale-105'
+                                                : 'bg-slate-50 border-transparent text-slate-300 hover:bg-white hover:border-slate-100'}
                                      `}
                                     >
-                                        <div className={`p-4 rounded-2xl ${formData.serviceType === 'remote' ? 'bg-white/10' : 'bg-white'}`}>
-                                            <Globe className="w-6 h-6" />
+                                        <div className={`p-6 rounded-2xl transition-all duration-700 ${formData.serviceType === 'remote' ? 'bg-white/10' : 'bg-white group-hover/deploy:bg-slate-50'}`}>
+                                            <Globe className="w-10 h-10" />
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Remote Expert</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-center">Global Node</span>
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Pricing Type */}
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Compensation Structure</label>
+                            {/* Revenue Protocol */}
+                            <div className="space-y-6">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4">Yield Logic</label>
                                 <div className="flex gap-4">
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, pricingType: 'fixed' }))}
-                                        className={`flex-1 p-6 rounded-[32px] border-2 flex flex-col items-center gap-4 transition-all
+                                        className={`flex-1 p-10 rounded-[3rem] border-2 flex flex-col items-center gap-6 transition-all duration-700 overflow-hidden relative group/logic
                                        ${formData.pricingType === 'fixed'
-                                                ? 'bg-blue-600 border-blue-600 text-white shadow-2xl'
-                                                : 'bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-100'}
+                                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xl'
+                                                : 'bg-slate-50 border-transparent text-slate-300 hover:bg-white hover:border-slate-100'}
                                      `}
                                     >
-                                        <div className={`p-4 rounded-2xl ${formData.pricingType === 'fixed' ? 'bg-white/10' : 'bg-white'}`}>
-                                            <CheckCircle2 className="w-6 h-6" />
+                                        <div className={`p-6 rounded-2xl transition-all duration-700 ${formData.pricingType === 'fixed' ? 'bg-white/10' : 'bg-white group-hover/logic:bg-slate-50'}`}>
+                                            <CheckCircle2 className="w-10 h-10" />
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Fixed Fee</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-center">Fixed Quantum</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, pricingType: 'hourly' }))}
-                                        className={`flex-1 p-6 rounded-[32px] border-2 flex flex-col items-center gap-4 transition-all
+                                        className={`flex-1 p-10 rounded-[3rem] border-2 flex flex-col items-center gap-6 transition-all duration-700 overflow-hidden relative group/logic
                                        ${formData.pricingType === 'hourly'
                                                 ? 'bg-blue-600 border-blue-600 text-white shadow-2xl'
-                                                : 'bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-100'}
+                                                : 'bg-slate-50 border-transparent text-slate-300 hover:bg-white hover:border-slate-100'}
                                      `}
                                     >
-                                        <div className={`p-4 rounded-2xl ${formData.pricingType === 'hourly' ? 'bg-white/10' : 'bg-white'}`}>
-                                            <Sparkles className="w-6 h-6" />
+                                        <div className={`p-6 rounded-2xl transition-all duration-700 ${formData.pricingType === 'hourly' ? 'bg-white/10' : 'bg-white group-hover/logic:bg-slate-50'}`}>
+                                            <Sparkles className="w-10 h-10" />
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Hourly Rate</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-center">Temporal Velocity</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Price Input */}
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Artifact Value (NPR)</label>
-                            <div className="relative group">
-                                <div className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-500 group-focus-within:bg-blue-600 group-focus-within:text-white transition-all">
-                                    Rs
+                        {/* Price Input Quantum */}
+                        <div className="space-y-6 group/price">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4 group-focus-within/price:text-blue-600 transition-colors">Yield Parameter (NPR)</label>
+                            <div className="relative">
+                                <div className="absolute left-10 top-1/2 -translate-y-1/2 w-16 h-16 bg-slate-50 border border-slate-100 group-focus-within/price:bg-blue-600 group-focus-within/price:text-white rounded-2xl flex items-center justify-center font-black text-slate-400 transition-all duration-500 italic uppercase">
+                                    NPR
                                 </div>
                                 <input
                                     type="number"
@@ -348,107 +376,134 @@ const AddService = () => {
                                     value={formData.price}
                                     onChange={handleChange}
                                     placeholder="0.00"
-                                    className="w-full bg-slate-50 border-2 border-transparent rounded-[24px] py-5 pl-20 pr-8 text-2xl font-black focus:bg-white focus:border-blue-600/20 transition-all outline-none"
+                                    className="w-full h-24 bg-slate-50 border-2 border-transparent rounded-[3rem] py-5 pl-32 pr-12 text-4xl font-black text-slate-950 focus:bg-white focus:border-blue-600 transition-all duration-700 outline-none shadow-inner placeholder:text-slate-100/50 tracking-tighter italic"
                                 />
                             </div>
                         </div>
 
-                        {/* Location Input (Only if onsite) */}
+                        {/* Hub Coordinates (Onsite Only) */}
                         {formData.serviceType === 'onsite' && (
-                            <div className="space-y-4 pt-4 animate-in fade-in duration-500">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Service Radius Address</label>
-                                <div className="relative group">
-                                    <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                            <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-left-8 duration-1000 group/geo">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-4 group-focus-within/geo:text-emerald-500 transition-colors">Geospatial Registry</label>
+                                <div className="relative">
+                                    <div className="absolute left-10 top-1/2 -translate-y-1/2 w-16 h-16 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center group-focus-within/geo:rotate-12 group-focus-within/geo:text-emerald-500 transition-all duration-500 text-slate-300">
+                                       <MapPin className="w-8 h-8" />
+                                    </div>
                                     <input
                                         type="text"
                                         name="address"
                                         value={formData.address}
                                         onChange={handleChange}
-                                        placeholder="Area, City (e.g., Baneshwor, Kathmandu)"
-                                        className="w-full bg-slate-50 border-2 border-transparent rounded-[24px] py-5 pl-16 pr-8 text-sm font-bold focus:bg-white focus:border-emerald-600/20 transition-all outline-none"
+                                        placeholder="Enter operational sector (e.g., Kathmandu Matrix, Sector 4)..."
+                                        className="w-full h-24 bg-slate-50 border-2 border-transparent rounded-[3rem] py-5 pl-32 pr-12 text-base font-black text-slate-950 focus:bg-white focus:border-emerald-600 transition-all duration-700 outline-none shadow-inner placeholder:text-slate-300 italic"
                                     />
                                 </div>
                                 {coords && (
-                                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest pl-2">精准 GPS Coordinates Optimized ✓</p>
+                                    <div className="flex items-center gap-3 px-6 py-4 bg-emerald-50/50 border border-emerald-100 rounded-[2rem] w-fit">
+                                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                       <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em]">GPS Registry Optimized: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}</p>
+                                    </div>
                                 )}
                             </div>
                         )}
 
-                        <div className="pt-8 flex justify-between gap-4">
-                            {!id && (
-                                <>
-                                    <button type="button" onClick={prevStep} className="px-8 py-5 rounded-[24px] border-2 border-slate-100 font-black text-[12px] uppercase tracking-widest hover:bg-slate-50">Back</button>
-                                    <Button
-                                        type="button"
-                                        onClick={nextStep}
-                                        disabled={!formData.price || (formData.serviceType === 'onsite' && !formData.address)}
-                                        className="px-10 py-5 rounded-[24px] font-black text-[12px] uppercase tracking-widest flex items-center gap-3"
-                                    >
-                                        Upload Assets <ChevronRight className="w-5 h-5" />
-                                    </Button>
-                                </>
-                            )}
-                        </div>
+                        {!id && (
+                           <div className="pt-12 flex justify-between gap-6">
+                                <button type="button" onClick={prevStep} className="h-20 px-12 bg-white border-2 border-slate-100 hover:border-slate-300 rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.4em] text-slate-300 hover:text-slate-950 transition-all duration-700 shadow-sm active:scale-95">Back</button>
+                                <button
+                                    type="button"
+                                    onClick={nextStep}
+                                    disabled={!formData.price || (formData.serviceType === 'onsite' && !formData.address)}
+                                    className="h-20 px-12 bg-slate-950 hover:bg-blue-600 text-white rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.4em] flex items-center gap-6 transition-all duration-700 disabled:opacity-20 shadow-2xl shadow-slate-950/20 active:scale-95 group/next"
+                                >
+                                    Proceed to Assets 
+                                    <ChevronRight className="w-6 h-6 group-hover/next:translate-x-2 transition-transform duration-500" />
+                                </button>
+                           </div>
+                        )}
                     </div>
                 )}
 
-                {/* STEP 3: ASSETS & DEPLOY */}
+                {/* STEP 3: ASSETS & DEPLOYMENT PROTOCOL */}
                 {(currentStep === 3 || id) && (
-                    <div className="bg-white rounded-[32px] border border-slate-50 shadow-2xl shadow-blue-900/5 p-8 space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-                                <ImageIcon className="w-6 h-6" />
+                    <div className="bg-white rounded-[4rem] border border-slate-100 shadow-[0_48px_100px_-20px_rgba(30,58,138,0.06)] p-16 space-y-16 animate-in fade-in slide-in-from-right-12 duration-1000 ring-1 ring-slate-100/50">
+                        <div className="flex items-center gap-6 mb-8">
+                            <div className="w-16 h-16 bg-indigo-50/50 border border-indigo-100 rounded-[2rem] flex items-center justify-center text-indigo-600 shadow-inner">
+                                <ImageIcon className="w-8 h-8" />
                             </div>
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Visual Identity & Portfolio</h2>
+                            <div>
+                               <h2 className="text-2xl font-black text-slate-950 tracking-tighter uppercase italic">Visual Identity</h2>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Provision high-resolution asset portfolio</p>
+                            </div>
                         </div>
 
-                        <div className="space-y-8">
-                            <ImageUpload
-                                label="Primary Branding Image"
-                                onUploadSuccess={handleImageSuccess}
-                                folder="services"
-                            />
+                        <div className="space-y-12">
+                            <div className="group/upload relative">
+                                <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 blur-2xl opacity-0 group-hover/upload:opacity-100 transition-opacity duration-1000 rounded-[4rem]"></div>
+                                <div className="relative z-10">
+                                   <ImageUpload
+                                       label="Command Center Visual Hub"
+                                       onUploadSuccess={handleImageSuccess}
+                                       folder="services"
+                                   />
+                                </div>
+                            </div>
 
-                            {/* Image Grid */}
+                            {/* Gallery Matrix */}
                             {formData.images.length > 0 && (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
                                     {formData.images.map((img, i) => (
-                                        <div key={i} className="group relative aspect-square rounded-[24px] overflow-hidden border border-slate-100">
-                                            <img src={img} alt="Gallery" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeImage(i)}
-                                                className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-md rounded-xl text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                        <div key={i} className="group/img relative aspect-square rounded-[2rem] overflow-hidden border-2 border-slate-100 shadow-2xl hover:shadow-indigo-600/20 transition-all duration-1000">
+                                            <img src={img} alt="Asset" className="w-full h-full object-cover group-hover/img:scale-125 transition-transform duration-1000" />
+                                            <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/img:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+                                               <button
+                                                   type="button"
+                                                   onClick={() => removeImage(i)}
+                                                   className="w-12 h-12 bg-rose-600 text-white rounded-2xl flex items-center justify-center hover:bg-rose-700 transition-all duration-300 scale-75 group-hover/img:scale-100 shadow-2xl"
+                                               >
+                                                   <Trash2 className="w-5 h-5" />
+                                               </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* Summary Checklist */}
-                        <div className="bg-slate-900 rounded-[24px] p-6 text-white space-y-4">
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">Final Review Checklist</p>
-                            <div className="flex items-center gap-4 text-xs font-bold text-white/80">
-                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-white" /></div>
-                                {formData.title} listed as {formData.serviceType}
-                            </div>
-                            <div className="flex items-center gap-4 text-xs font-bold text-white/80">
-                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-white" /></div>
-                                Automatic secure escrow integration active
+                        {/* Summary Surveillance Checklist */}
+                        <div className="bg-slate-950 rounded-[2.5rem] p-10 text-white space-y-6 relative overflow-hidden group/check">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/10 blur-[60px] rounded-full -mr-10 -mt-10 group-hover/check:bg-blue-600/20 transition-all duration-1000"></div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20 mb-2 relative z-10">Provisioning Protocol Integrity Review</p>
+                            <div className="space-y-4 relative z-10">
+                               <div className="flex items-center gap-6 group/item">
+                                   <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover/item:bg-emerald-600 group-hover/item:border-emerald-600 transition-all duration-500"><CheckCircle2 className="w-5 h-5 text-white/40 group-hover/item:text-white" /></div>
+                                   <p className="text-xs font-bold text-white/60 group-hover/item:text-white transition-colors tracking-wide italic leading-none truncate">Asset Module: <span className="text-white not-italic">{formData.title || 'NULL'}</span> — Deployment Strategy: <span className="text-blue-400 not-italic uppercase">{formData.serviceType}</span></p>
+                               </div>
+                               <div className="flex items-center gap-6 group/item">
+                                   <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover/item:bg-emerald-600 group-hover/item:border-emerald-600 transition-all duration-500"><CheckCircle2 className="w-5 h-5 text-white/40 group-hover/item:text-white" /></div>
+                                   <p className="text-xs font-bold text-white/60 group-hover/item:text-white transition-colors tracking-wide italic leading-none">Automatic Cryptographic Escrow Protection active for all yields.</p>
+                               </div>
                             </div>
                         </div>
 
-                        <div className="pt-8 flex justify-between gap-4">
-                            {!id && <button type="button" onClick={prevStep} className="px-8 py-5 rounded-[24px] border-2 border-slate-100 font-black text-[12px] uppercase tracking-widest hover:bg-slate-50">Back</button>}
+                        <div className="pt-12 flex flex-col md:flex-row gap-6">
+                            {!id && <button type="button" onClick={prevStep} className="h-20 px-12 bg-white border-2 border-slate-100 hover:border-slate-300 rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.4em] text-slate-300 hover:text-slate-950 transition-all duration-700 shadow-sm active:scale-95">Back to Logistics</button>}
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="flex-1 bg-blue-600 text-white rounded-[24px] font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 hover:bg-slate-900 transition-all disabled:opacity-50 h-16"
+                                className="flex-1 h-20 bg-blue-600 hover:bg-slate-950 text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.4em] flex items-center justify-center gap-6 shadow-2xl shadow-blue-600/30 active:scale-95 transition-all duration-1000 group/submit disabled:opacity-30"
                             >
-                                {submitting ? 'Synchronizing Profile...' : (id ? 'Update Service' : 'Finalize & Launch Service')}
+                                {submitting ? (
+                                    <>
+                                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Synchronizing Hub...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-6 h-6 group-hover/submit:rotate-180 transition-transform duration-1000" />
+                                        {id ? 'Commit Tactical Update' : 'Initialize & Deploy Service Node'}
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

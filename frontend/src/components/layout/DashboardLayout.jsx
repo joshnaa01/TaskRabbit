@@ -108,7 +108,7 @@ const DashboardLayout = ({ children }) => {
     const adminItems = [
       { label: 'Users', icon: Users, path: '/admin/users' },
       { label: 'Categories', icon: Tag, path: '/admin/categories' },
-      { label: 'Verifications', icon: CheckCircle2, path: '/admin/verification-queue' },
+      { label: 'Applications', icon: CheckCircle2, path: '/admin/verification-queue' },
       { label: 'Payments', icon: CreditCard, path: '/admin/payments' },
       { label: 'Disputes', icon: AlertCircle, path: '/admin/disputes' },
       { label: 'Map', icon: MapIcon, path: '/admin/map' },
@@ -122,7 +122,7 @@ const DashboardLayout = ({ children }) => {
   };
 
   const navItems = getNavItems();
-  const badge = user?.role === 'provider' ? { label: 'Expert Access', color: 'bg-indigo-600' } : { label: 'Member Access', color: 'bg-emerald-600' };
+  const badge = user?.role === 'provider' ? { label: 'Provider', color: 'bg-indigo-600' } : { label: 'Client', color: 'bg-emerald-600' };
 
   if (user?.role === 'client') {
      return (
@@ -215,30 +215,30 @@ const DashboardLayout = ({ children }) => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] font-sans text-slate-900 overflow-hidden">
       {/* Sidebar (For Providers/Admins) */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 transition-transform duration-300 lg:static lg:translate-x-0
-        ${user?.role === 'client' ? 'bg-white border-r border-slate-100' : 'bg-slate-900'}
+        fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 lg:static lg:translate-x-0
+        ${user?.role === 'client' ? 'bg-white border-r border-slate-100' : 'bg-slate-950'}
         ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
             {/* Logo area */}
-            <div className={`h-20 flex items-center px-8 border-b ${user?.role === 'client' ? 'border-slate-50' : 'border-white/5'}`}>
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                   <Zap className="w-5 h-5 text-white fill-white" />
+            <div className={`h-16 flex items-center px-6 border-b ${user?.role === 'client' ? 'border-slate-100' : 'border-white/5'}`}>
+                <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center mr-2.5 shadow-lg shadow-blue-600/20">
+                   <Zap className="w-4 h-4 text-white fill-white" />
                 </div>
-                <span className={`text-xl font-black tracking-tight ${user?.role === 'client' ? 'text-slate-900' : 'text-white'}`}>TaskRabbit<span className="text-blue-500">.</span></span>
+                <span className={`text-lg font-black tracking-tighter ${user?.role === 'client' ? 'text-slate-900' : 'text-white'}`}>TaskRabbit<span className="text-blue-500">.</span></span>
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`lg:hidden ml-auto ${user?.role === 'client' ? 'text-slate-400' : 'text-slate-500'}`}
                 >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                 </button>
             </div>
 
             {/* Navigation items */}
-            <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
+            <nav className="flex-1 px-3 py-6 space-y-0.5 overflow-y-auto custom-scrollbar">
                {navItems.map((item) => {
                   const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
                   const isClient = user?.role === 'client';
@@ -248,18 +248,18 @@ const DashboardLayout = ({ children }) => {
                       to={item.path}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`
-                        flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group relative
+                        flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative
                         ${isActive 
-                           ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20' 
+                           ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' 
                            : isClient 
                              ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-50' 
                              : 'text-slate-400 hover:text-white hover:bg-white/5'}
                       `}
                     >
-                      <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'group-hover:text-blue-600 transition-colors'}`} />
-                      <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
-                      {((item.label === 'Messages' && unreadMessages > 0) || (item.label === 'Verification Queue' && pendingReviewsCount > 0)) && (
-                         <span className="absolute top-3 right-4 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                      <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'group-hover:text-blue-600 transition-colors'}`} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                      {((item.label === 'Messages' && unreadMessages > 0) || (item.label === 'Applications' && pendingReviewsCount > 0)) && (
+                         <span className="absolute top-2.5 right-3 w-1.5 h-1.5 rounded-full bg-red-500 ring-2 ring-slate-950 animate-pulse" />
                       )}
                     </Link>
                   );
@@ -267,26 +267,26 @@ const DashboardLayout = ({ children }) => {
             </nav>
 
             {/* Account area */}
-            <div className={`p-4 border-t ${user?.role === 'client' ? 'border-slate-100 bg-slate-50' : 'border-white/5 bg-black/20'}`}>
+            <div className={`p-4 border-t ${user?.role === 'client' ? 'border-slate-100 bg-slate-50' : 'border-white/5 bg-black/40'}`}>
                 <button 
                    onClick={() => setIsProfileModalOpen(true)}
-                   className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/5 transition-all group"
+                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-all group"
                 >
-                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${user?.role === 'client' ? 'bg-white text-slate-400 border border-slate-100' : 'bg-slate-800 text-slate-400'} overflow-hidden`}>
+                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${user?.role === 'client' ? 'bg-white text-slate-400 border border-slate-100' : 'bg-slate-800 text-slate-400'} overflow-hidden shadow-sm`}>
                       {user?.profilePicture ? (
                          <img src={user.profilePicture} alt="" className="w-full h-full object-cover" />
                       ) : (
-                         <User className="w-5 h-5" />
+                         <User className="w-4 h-4" />
                       )}
                    </div>
                    <div className="min-w-0 text-left">
-                      <p className={`text-xs font-black truncate ${user?.role === 'client' ? 'text-slate-900' : 'text-white'}`}>{user?.name}</p>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">Edit Profile</p>
+                      <p className={`text-[11px] font-black truncate leading-tight ${user?.role === 'client' ? 'text-slate-900' : 'text-white'}`}>{user?.name}</p>
+                      <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest truncate">Account Settings</p>
                    </div>
                 </button>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 mt-1 rounded-2xl text-slate-500 hover:text-red-400 transition-colors hover:bg-white/5">
-                   <LogOut className="w-4 h-4" />
-                   <span className="text-xs font-black uppercase tracking-widest">Sign Out</span>
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 mt-1 rounded-xl text-slate-500 hover:text-red-400 transition-colors hover:bg-white/5">
+                   <LogOut className="w-3.5 h-3.5" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">Sign Out</span>
                 </button>
             </div>
         </div>
@@ -295,56 +295,60 @@ const DashboardLayout = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Top Header */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-40 shrink-0">
+        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-40 shrink-0 shadow-sm">
             <div className="lg:hidden">
                <button onClick={() => setIsMobileMenuOpen(true)}>
-                  <Menu className="w-6 h-6 text-slate-600" />
+                  <Menu className="w-5 h-5 text-slate-600" />
                </button>
             </div>
             
-            <div className="flex-1 max-w-xl mx-8 relative hidden md:block">
-               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <div className="flex-1 max-w-lg mx-6 relative hidden md:block">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                <input 
                  type="text" 
-                 placeholder="Search platform assets..." 
-                 className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 text-xs font-bold outline-none focus:bg-white focus:ring-4 focus:ring-blue-600/5 transition-all placeholder:text-slate-400"
+                 placeholder="Search for something..." 
+                 className="w-full bg-slate-50 border-none rounded-lg py-2 pl-10 pr-4 text-[11px] font-bold outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
                />
             </div>
 
-            <div className="flex items-center gap-4">
-               <div className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl ${badge.color}/10 border border-current/5`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${badge.color} animate-pulse`}></span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-600">{badge.label}</span>
+            <div className="flex items-center gap-3">
+               <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${badge.color}/5 border border-current/5`}>
+                  <span className={`w-1 h-1 rounded-full ${badge.color} animate-pulse`}></span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{badge.label}</span>
                </div>
                
                {/* Notifications */}
                <div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={`rounded-full relative transition-all ${showNotif ? 'bg-slate-100 text-blue-600' : ''}`}
+                  <button 
+                    className={`p-2 rounded-lg relative transition-all ${showNotif ? 'bg-slate-100 text-blue-600 shadow-inner' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
                     onClick={() => {
-                        if (!showNotif) markRead();
                         setShowNotif(!showNotif);
+                        if (!showNotif) {
+                            // Optionally refresh instead of marking all read
+                            api.get('/notifications/my').then(res => {
+                                setNotifications(res.data.data);
+                                setUnreadCount(res.data.unreadCount);
+                            });
+                        }
                     }}
                   >
-                     <Bell className="w-5 h-5" />
+                     <Bell className="w-4 h-4" />
                      {unreadCount > 0 && (
-                        <span className="absolute top-2.5 right-2.5 w-4 h-4 bg-red-600 text-white text-[8px] font-black flex items-center justify-center rounded-full ring-2 ring-white">
+                        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[7px] font-black flex items-center justify-center rounded-full ring-2 ring-white">
                            {unreadCount}
                         </span>
                      )}
-                  </Button>
+                  </button>
                </div>
 
-               <Button variant="ghost" size="icon" className="rounded-full">
-                  <Settings className="w-5 h-5" />
-               </Button>
+               <button className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
+                  <Settings className="w-4 h-4" />
+               </button>
             </div>
          </header>
 
-         <main className="flex-1 p-8 lg:p-12 overflow-y-auto bg-slate-50">
-            <div className="max-w-7xl mx-auto">
+         <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-[#F8FAFC]">
+            <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
                {children}
             </div>
          </main>

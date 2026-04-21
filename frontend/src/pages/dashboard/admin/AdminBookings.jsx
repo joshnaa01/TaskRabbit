@@ -11,7 +11,8 @@ import {
   XCircle,
   Activity,
   Shield,
-  Search
+  Search,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,6 +22,7 @@ const AdminBookings = () => {
     const [expandedBooking, setExpandedBooking] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 12;
 
     const fetchBookings = useCallback(async () => {
         try {
@@ -28,7 +30,7 @@ const AdminBookings = () => {
             const res = await api.get('/bookings/my');
             setBookings(res.data.data || res.data || []);
         } catch (err) {
-            toast.error('Registry sync failure.');
+            toast.error('Failed to load bookings.');
         } finally {
             setLoading(false);
         }
@@ -50,128 +52,151 @@ const AdminBookings = () => {
         .filter(b => activeFilter === 'all' || b.status === activeFilter);
 
     if (loading) return (
-      <div className="flex flex-col items-center justify-center h-96 gap-6">
-        <div className="w-16 h-16 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading bookings...</p>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Loading Bookings...</p>
       </div>
     );
 
-    const ITEMS_PER_PAGE = 10;
     const totalPages = Math.ceil(sortedBookings.length / ITEMS_PER_PAGE);
     const paginatedBookings = sortedBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
-        <div className="flex flex-col gap-10">
-            <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-                    <Shield className="w-10 h-10 text-slate-900 fill-slate-900/5" /> All Bookings
-                </h1>
-                <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2 tracking-[0.2em]">Overview of all platform bookings</p>
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {/* Header & Filter Dock */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-slate-100/50">
+                <div>
+                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase">Booking Operations</h1>
+                    <div className="flex items-center gap-2 mt-2">
+                       <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{bookings.length} TOTAL</p>
+                       <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System live status</p>
+                   </div>
+                </div>
+                <div className="flex items-center gap-1 bg-white border border-slate-200 p-0.5 rounded-lg">
+                    {[
+                        { key: 'all', label: 'All' },
+                        { key: 'Pending Review', label: 'Review' },
+                        { key: 'Accepted', label: 'Active' },
+                        { key: 'Completed', label: 'Done' },
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => { setActiveFilter(tab.key); setCurrentPage(1); }}
+                            className={`px-3 py-1.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${
+                                activeFilter === tab.key 
+                                ? 'bg-slate-950 text-white shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-                {[
-                    { key: 'all', label: 'All' },
-                    { key: 'Pending Review', label: 'Needs Review' },
-                    { key: 'Accepted', label: 'Active' },
-                    { key: 'Completed', label: 'Done' },
-                ].map(tab => (
-                    <button
-                        key={tab.key}
-                        onClick={() => { setActiveFilter(tab.key); setCurrentPage(1); }}
-                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                            activeFilter === tab.key ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
-                        }`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-
-            <div className="bg-white rounded-[44px] shadow-2xl shadow-blue-900/5 border border-slate-50 overflow-hidden">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
+            {/* High-Density Table Console */}
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
+                <table className="w-full text-left">
                     <thead>
-                        <tr className="bg-slate-50/50">
-                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Booking</th>
-                            <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Parties</th>
-                            <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
+                        <tr className="bg-slate-50/50 border-b border-slate-100/50">
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Service Context</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Parties</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status</th>
+                            <th className="px-5 py-2.5 text-right text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Matrix Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100/50">
+                    <tbody className="divide-y divide-slate-50">
                         {paginatedBookings.map((booking) => (
                             <React.Fragment key={booking._id}>
-                                <tr className="group hover:bg-slate-50/30 transition-all cursor-pointer" onClick={() => setExpandedBooking(expandedBooking === booking._id ? null : booking._id)}>
-                                    <td className="px-10 py-10">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-sm">
-                                                {booking.serviceId?.serviceType === 'remote' ? <Terminal className="w-6 h-6" /> : <MapPin className="w-6 h-6" />}
+                                <tr 
+                                    className={`group transition-all cursor-pointer relative ${expandedBooking === booking._id ? 'bg-blue-50/20' : 'hover:bg-slate-50/30'}`} 
+                                    onClick={() => setExpandedBooking(expandedBooking === booking._id ? null : booking._id)}
+                                >
+                                    <td className="px-5 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm shrink-0">
+                                                {booking.serviceId?.serviceType === 'remote' ? <Terminal className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
                                             </div>
-                                            <div>
-                                                <p className="font-black text-slate-900 text-base mb-1">{booking.serviceId?.title || 'Service'}</p>
-                                                <span className="px-3 py-1 bg-slate-100 rounded-lg text-[8px] font-black uppercase tracking-widest text-slate-500 border border-slate-200">{booking.status}</span>
+                                            <div className="min-w-0">
+                                                <p className="font-black text-xs text-slate-950 truncate uppercase tracking-tight">{booking.serviceId?.title || 'System Task'}</p>
+                                                <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mt-1">HEX: {booking._id?.slice(-8).toUpperCase()}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-10 py-10">
-                                        <div className="flex flex-col gap-1">
-                                            <p className="text-[10px] font-black text-slate-900">C: {booking.clientId?.name}</p>
-                                            <p className="text-[10px] font-black text-slate-400">P: {booking.providerId?.name}</p>
+                                    <td className="px-5 py-3">
+                                        <div className="flex flex-col gap-1 items-center">
+                                            <p className="text-[8px] font-black text-slate-700 uppercase tracking-tighter shrink-0">C: {booking.clientId?.name}</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter shrink-0">P: {booking.providerId?.name}</p>
                                         </div>
                                     </td>
-                                    <td className="px-10 py-10 text-right">
+                                    <td className="px-5 py-3 text-center">
+                                        <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest border transition-all ${
+                                            booking.status === 'Completed' ? 'bg-emerald-600 text-white border-emerald-600' : 
+                                            booking.status === 'Pending Review' ? 'bg-amber-500 text-white border-amber-500' : 
+                                            'bg-slate-950 text-white border-slate-950 text-[7px]'
+                                        }`}>{booking.status}</span>
+                                    </td>
+                                    <td className="px-5 py-3 text-right">
                                         {booking.status === 'Pending Review' ? (
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-1.5">
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleVerdict(booking._id, 'Completed'); }}
-                                                    className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/10"
+                                                    className="px-3 py-1.5 bg-emerald-600 text-white rounded text-[8px] font-black uppercase tracking-widest hover:bg-slate-950 transition-all shadow-sm"
                                                 >
-                                                    <CheckCircle2 className="w-5 h-5" />
+                                                    VERIFY
                                                 </button>
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleVerdict(booking._id, 'Rejected'); }}
-                                                    className="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center hover:bg-red-600 transition-all shadow-lg shadow-red-500/10"
+                                                    className="px-3 py-1.5 bg-red-600 text-white rounded text-[8px] font-black uppercase tracking-widest hover:bg-slate-950 transition-all shadow-sm"
                                                 >
-                                                    <XCircle className="w-5 h-5" />
+                                                    ANNUL
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center justify-end gap-2 text-slate-300 font-black text-[10px] uppercase tracking-widest">
-                                                View Details <ChevronDown className={`w-4 h-4 transition-transform ${expandedBooking === booking._id ? 'rotate-180' : ''}`} />
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                 <button 
+                                                     className={`px-3 py-1.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${expandedBooking === booking._id ? 'bg-slate-950 text-white' : 'bg-white border border-slate-200 text-slate-400 hover:text-slate-950'}`}
+                                                 >
+                                                     INSPECT
+                                                 </button>
                                             </div>
                                         )}
                                     </td>
                                 </tr>
                                 {expandedBooking === booking._id && (
-                                    <tr className="bg-slate-50/50">
-                                        <td colSpan="3" className="px-10 py-12">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-in fade-in duration-500">
-                                                <div className="space-y-4">
-                                                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                        <FileText className="w-4 h-4 text-blue-600" /> Interaction Log
-                                                    </h4>
-                                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-xs text-slate-500 leading-relaxed font-medium">
-                                                        {booking.requirements?.description || 'No description provided.'}
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-4">
-                                                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                        <UploadCloud className="w-4 h-4 text-emerald-600" /> Submitted Work
-                                                    </h4>
-                                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
-                                                        {booking.deliverables?.message && <p className="text-xs font-semibold text-slate-600">{booking.deliverables.message}</p>}
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {booking.deliverables?.files?.map((f, i) => (
-                                                                <a key={i} href={f} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
-                                                                    <img src={f} className="w-full h-full object-cover" />
-                                                                </a>
-                                                            ))}
+                                    <tr className="bg-slate-50/10">
+                                        <td colSpan="4" className="px-5 py-6 transition-all animate-in zoom-in-95 duration-200 border-b border-slate-50">
+                                            <div className="max-w-4xl mx-auto bg-white rounded-xl border border-slate-100 p-5 shadow-lg space-y-5">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 flex items-center gap-2 italic">
+                                                            <Activity className="w-2.5 h-2.5" /> Client Requirement Stream
+                                                        </h4>
+                                                        <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-100 text-[10px] text-slate-600 leading-relaxed font-bold italic">
+                                                            "{booking.requirements?.description || 'Null protocol description.'}"
                                                         </div>
-                                                        {(!booking.deliverables?.message && !booking.deliverables?.files?.length) && (
-                                                            <div className="py-8 text-center opacity-20">
-                                                                <Activity className="w-8 h-8 mx-auto mb-2" />
-                                                                <p className="text-[8px] font-black uppercase">No files submitted</p>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 flex items-center gap-2 italic">
+                                                            <Shield className="w-2.5 h-2.5" /> Provider Evidence Vault
+                                                        </h4>
+                                                        <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-100 space-y-4">
+                                                            {booking.deliverables?.message && <p className="text-[9px] font-bold text-slate-500 italic bg-white p-2.5 rounded border-l-2 border-emerald-500">"{booking.deliverables.message}"</p>}
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {booking.deliverables?.files?.map((f, i) => (
+                                                                    <a key={i} href={f} target="_blank" rel="noreferrer" className="w-10 h-10 rounded border border-slate-100 overflow-hidden hover:scale-105 transition-all shadow-sm">
+                                                                        <img src={f} className="w-full h-full object-cover" />
+                                                                    </a>
+                                                                ))}
                                                             </div>
-                                                        )}
+                                                            {(!booking.deliverables?.message && !booking.deliverables?.files?.length) && (
+                                                                <div className="py-4 text-center opacity-40">
+                                                                    <Activity className="w-4 h-4 mx-auto mb-1 text-slate-300" />
+                                                                    <p className="text-[7px] font-black text-slate-300 uppercase tracking-widest">No matrix submission detected</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -184,21 +209,15 @@ const AdminBookings = () => {
                 </table>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, sortedBookings.length)} of {sortedBookings.length}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Previous</button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                            <button key={page} onClick={() => setCurrentPage(page)} className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === page ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'}`}>{page}</button>
-                        ))}
-                        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Next</button>
-                    </div>
+            {/* Tactical Pagination Console */}
+            <div className="flex items-center justify-between px-2 text-[9px] font-black uppercase tracking-[0.25em] text-slate-300">
+                <p>INDEX: {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, sortedBookings.length)} / {sortedBookings.length}</p>
+                <div className="flex items-center gap-6">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">PREV_SEQ</button>
+                    <span className="text-slate-900 font-black">{currentPage} | {totalPages || 1}</span>
+                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">NEXT_SEQ</button>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

@@ -8,7 +8,8 @@ import {
     CheckCircle2,
     XSquare,
     MessageSquare,
-    FileText
+    FileText,
+    Gavel
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -19,19 +20,17 @@ const AdminDisputes = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedDispute, setExpandedDispute] = useState(null);
     const [verdict, setVerdict] = useState('');
-    const [resolutionStatus, setResolutionStatus] = useState('Completed'); // or Cancelled
+    const [resolutionStatus, setResolutionStatus] = useState('Completed');
     const [finalPrice, setFinalPrice] = useState('');
     const [actionLoading, setActionLoading] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 10;
+    const ITEMS_PER_PAGE = 12;
 
     const fetchDisputedBookings = async () => {
         try {
             setLoading(true);
-            // Reusing getBookings logic for admin which fetches all bookings, we can filter by isDisputed or status='Disputed'
             const res = await api.get('/bookings');
             const allBookings = res.data.data || res.data || [];
-            // Assuming we only get bookings where isDisputed is true or status is Disputed
             const disputedBookings = allBookings.filter(b => b.isDisputed || b.status === 'Disputed' || (b.dispute && b.dispute.status === 'Open'));
             setBookings(disputedBookings);
             setCurrentPage(1);
@@ -42,13 +41,11 @@ const AdminDisputes = () => {
         }
     };
 
-    useEffect(() => {
-        fetchDisputedBookings();
-    }, []);
+    useEffect(() => { fetchDisputedBookings(); }, []);
 
     const handleResolve = async (bookingId) => {
         if (!verdict.trim()) return toast.error('Please provide an administrative verdict');
-        if (resolutionStatus === 'Completed' && finalPrice === '') return toast.error('Please provide a final price point for the completed service');
+        if (resolutionStatus === 'Completed' && finalPrice === '') return toast.error('Please provide a final price point');
 
         try {
             setActionLoading(bookingId);
@@ -77,193 +74,196 @@ const AdminDisputes = () => {
     );
 
     return (
-        <div className="flex flex-col gap-10">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-slate-100/50">
                 <div>
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Disputes</h1>
-                        <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                            {filteredDisputes.length} Case{filteredDisputes.length !== 1 ? 's' : ''}
-                        </span>
+                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Dispute Management</h1>
+                    <div className="flex items-center gap-2 mt-2">
+                       <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{bookings.length} DISPUTES</p>
+                       <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System Active</p>
                     </div>
-                    <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px] mt-2">Review and resolve service disputes</p>
                 </div>
-                <button onClick={fetchDisputedBookings} className="p-3 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
-                    <RefreshCcw className="w-5 h-5" />
-                </button>
-            </div>
-
-            <div className="bg-white rounded-[44px] shadow-2xl shadow-blue-900/5 border border-slate-50 overflow-hidden flex flex-col">
-                {/* Controls */}
-                <div className="p-8 border-b border-slate-50 bg-slate-50/30">
-                    <div className="relative w-full max-w-xl">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-2">
+                    <div className="relative group/search">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 group-focus-within/search:text-amber-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder="Search active disputes by service or parties..."
-                            className="w-full bg-white border border-slate-100 rounded-2xl py-3 pl-12 text-xs font-bold focus:ring-4 focus:ring-blue-600/10 placeholder:text-slate-400 transition-all outline-none"
+                            placeholder="Search disputes..."
+                            className="bg-white border border-slate-200 rounded py-1.5 pl-8 pr-4 text-[8px] font-black uppercase tracking-[0.2em] outline-none focus:border-amber-500 transition-all w-40 placeholder:text-slate-200"
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                     </div>
+                    <button onClick={fetchDisputedBookings} className="p-1.5 rounded bg-white border border-slate-200 text-slate-300 hover:text-amber-600 hover:border-amber-200 transition-all">
+                        <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
                 </div>
+            </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
-                        <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Case Details</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Involved Parties</th>
-                                <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Action Required</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {loading ? (
-                                <tr><td colSpan="3" className="px-10 py-32 text-center text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">Loading disputes...</td></tr>
-                            ) : filteredDisputes.length > 0 ? filteredDisputes.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((booking) => (
-                                <React.Fragment key={booking._id}>
-                                    <tr className="group hover:bg-emerald-50/30 transition-all">
-                                        <td className="px-10 py-8">
-                                            <div className="flex items-center gap-5">
-                                                <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100 text-emerald-500">
-                                                    <AlertCircle className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-black text-slate-900 mb-0.5">{booking.serviceId?.title || 'Unknown Service'}</p>
-                                                    <p className="text-xs font-bold text-slate-500 line-clamp-1 max-w-sm">{booking.dispute?.reason || booking.rejectionReason}</p>
-                                                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-2">Logged: {new Date(booking.dispute?.createdAt || booking.updatedAt).toLocaleDateString()}</p>
-                                                </div>
+            {/* High-Density Dispute Registry */}
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="bg-slate-50/50 border-b border-slate-50">
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Dispute Details</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Involved Users</th>
+                            <th className="px-5 py-2.5 text-right text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                        {loading ? (
+                            <tr><td colSpan="3" className="px-8 py-24 text-center">
+                                <div className="flex flex-col items-center gap-4 animate-pulse opacity-40">
+                                    <RefreshCcw className="w-6 h-6 animate-spin text-slate-300" />
+                                    <p className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-300">Loading disputes...</p>
+                                </div>
+                            </td></tr>
+                        ) : filteredDisputes.length > 0 ? filteredDisputes.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((booking) => (
+                            <React.Fragment key={booking._id}>
+                                <tr className={`group transition-all ${expandedDispute === booking._id ? 'bg-amber-50/20' : 'hover:bg-slate-50/30'}`}>
+                                    <td className="px-5 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded bg-white border border-slate-100 flex items-center justify-center shrink-0 text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm">
+                                                <AlertCircle className="w-4 h-4" />
                                             </div>
-                                        </td>
-                                        <td className="px-10 py-8">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <p className="text-xs font-bold text-slate-700"><span className="text-[9px] text-slate-400 uppercase tracking-widest font-black mr-2">Client:</span> {booking.clientId?.name}</p>
-                                                <p className="text-xs font-bold text-slate-700"><span className="text-[9px] text-slate-400 uppercase tracking-widest font-black mr-2">Tasker:</span> {booking.providerId?.name}</p>
+                                            <div className="min-w-0">
+                                                <p className="font-black text-xs text-slate-950 truncate uppercase tracking-tight leading-none mb-1">{booking.serviceId?.title || 'System Task'}</p>
+                                                <p className="text-[7px] font-black text-amber-600 uppercase tracking-widest leading-none italic opacity-80">
+                                                    LOG: {booking.dispute?.reason || booking.rejectionReason}
+                                                </p>
                                             </div>
-                                        </td>
-                                        <td className="px-10 py-8 text-right">
-                                            <div className="flex justify-end items-center gap-3">
-                                                <Link
-                                                    to={`/admin/messages?to=${booking.clientId?._id}`}
-                                                    className="p-3 bg-slate-50 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                                    title="Message Client"
-                                                >
-                                                    <MessageSquare className="w-4 h-4" />
-                                                </Link>
-                                                <button
-                                                    onClick={() => {
-                                                        setExpandedDispute(expandedDispute === booking._id ? null : booking._id);
-                                                        setVerdict(booking.dispute?.adminVerdict || '');
-                                                        setResolutionStatus('Completed');
-                                                        setFinalPrice(booking.basePrice || '');
-                                                    }}
-                                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md
-                                                    ${expandedDispute === booking._id
-                                                            ? 'bg-slate-900 text-white shadow-slate-900/20'
-                                                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'}
-                                                `}
-                                                >
-                                                    {expandedDispute === booking._id ? 'Close Panel' : 'Review & Resolve'}
-                                                </button>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3">
+                                        <div className="flex flex-col gap-1 items-center">
+                                            <p className="text-[8px] font-black text-slate-700 uppercase tracking-tighter shrink-0">C: {booking.clientId?.name}</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter shrink-0">P: {booking.providerId?.name}</p>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3 text-right">
+                                        <div className="flex justify-end items-center gap-1">
+                                            <Link
+                                                to={`/admin/messages?to=${booking.clientId?._id}`}
+                                                className="w-8 h-8 rounded bg-white border border-slate-100 flex items-center justify-center text-slate-300 hover:text-slate-950 hover:border-slate-300 transition-all shadow-sm"
+                                            >
+                                                <MessageSquare className="w-3 h-3" />
+                                            </Link>
+                                            <button
+                                                onClick={() => {
+                                                    setExpandedDispute(expandedDispute === booking._id ? null : booking._id);
+                                                    setVerdict(booking.dispute?.adminVerdict || '');
+                                                    setResolutionStatus('Completed');
+                                                    setFinalPrice(booking.basePrice || '');
+                                                }}
+                                                className={`px-3 py-1.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${expandedDispute === booking._id ? 'bg-slate-950 text-white' : 'bg-amber-600 text-white hover:bg-slate-900 shadow-sm'}`}
+                                            >
+                                                {expandedDispute === booking._id ? 'CANCEL' : 'RESOLVE'}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {expandedDispute === booking._id && (
+                                    <tr className="bg-amber-50/10">
+                                        <td colSpan="3" className="px-5 py-6 transition-all animate-in zoom-in-95 duration-200 border-b border-slate-50">
+                                            <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-100 p-5 shadow-lg space-y-5">
+                                                <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Gavel className="w-3.5 h-3.5 text-slate-400" />
+                                                        <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-950 italic">Resolution Details</h3>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <button
+                                                            onClick={() => setResolutionStatus('Completed')}
+                                                            className={`py-2 px-4 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${resolutionStatus === 'Completed' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
+                                                        >
+                                                            COMPLETE DISPUTE
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setResolutionStatus('Cancelled')}
+                                                            className={`py-2 px-4 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${resolutionStatus === 'Cancelled' ? 'bg-red-600 text-white border-red-600' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
+                                                        >
+                                                            CANCEL DISPUTE
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1 italic">Dispute Reason</label>
+                                                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                                                <p className="text-[10px] font-black text-slate-600 leading-relaxed italic truncate">
+                                                                    "{booking.dispute?.reason || 'No input data.'}"
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            {resolutionStatus === 'Completed' && (
+                                                                <div className="space-y-1.5">
+                                                                    <label className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1 italic">Final Price</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={finalPrice}
+                                                                        onChange={e => setFinalPrice(e.target.value)}
+                                                                        className="w-full bg-slate-50 rounded px-3 py-1.5 text-[10px] font-black border border-slate-100 outline-none focus:border-indigo-600 transition-all uppercase"
+                                                                        placeholder="Final price..."
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1 italic">Resolution Verdict</label>
+                                                                <textarea
+                                                                    value={verdict}
+                                                                    onChange={e => setVerdict(e.target.value)}
+                                                                    className="w-full bg-slate-50 rounded p-3 text-[10px] font-black border border-slate-100 outline-none focus:border-indigo-600 transition-all min-h-[70px] resize-none uppercase placeholder:text-slate-200"
+                                                                    placeholder="Enter verdict..."
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleResolve(booking._id)}
+                                                        disabled={actionLoading === booking._id}
+                                                        className="w-full py-2.5 rounded bg-slate-950 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl active:scale-95"
+                                                    >
+                                                        {actionLoading === booking._id ? 'SAVING...' : 'RESOLVE DISPUTE'}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
-                                    {expandedDispute === booking._id && (
-                                        <tr className="bg-emerald-50/10">
-                                            <td colSpan="3" className="p-10">
-                                                <div className="max-w-3xl mx-auto bg-white rounded-[32px] border border-emerald-100 p-8 shadow-2xl shadow-emerald-900/5">
-                                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                                        <FileText className="w-4 h-4 text-emerald-500" /> Dispute Mediation
-                                                    </h3>
-
-                                                    <div className="space-y-6">
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Resolution Outcome</label>
-                                                            <div className="flex items-center gap-4">
-                                                                <button
-                                                                    onClick={() => setResolutionStatus('Completed')}
-                                                                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest border transition-all flex items-center justify-center gap-2
-                                                            ${resolutionStatus === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-emerald-200 hover:text-emerald-500'}
-                                                         `}
-                                                                >
-                                                                    <CheckCircle2 className="w-4 h-4" /> Complete & Pay Provider
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setResolutionStatus('Cancelled')}
-                                                                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest border transition-all flex items-center justify-center gap-2
-                                                            ${resolutionStatus === 'Cancelled' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-emerald-200 hover:text-emerald-500'}
-                                                         `}
-                                                                >
-                                                                    <XSquare className="w-4 h-4" /> Cancel & Refund Client
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        {/* rest of the content remains the same but within the new color theme */}
-
-                                                        {resolutionStatus === 'Completed' && (
-                                                            <div>
-                                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adjusted Final Price (NPR)</label>
-                                                                <input
-                                                                    type="number"
-                                                                    value={finalPrice}
-                                                                    onChange={e => setFinalPrice(e.target.value)}
-                                                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold border border-slate-100 outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                                                    placeholder="e.g. 5000"
-                                                                />
-                                                            </div>
-                                                        )}
-
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Admin Decision / Reason</label>
-                                                            <textarea
-                                                                value={verdict}
-                                                                onChange={e => setVerdict(e.target.value)}
-                                                                className="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border border-slate-100 outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[120px]"
-                                                                placeholder="Provide the official platform reasoning for this resolution. This may be visible to parties involved..."
-                                                            />
-                                                        </div>
-
-                                                        <button
-                                                            onClick={() => handleResolve(booking._id)}
-                                                            className="w-full py-4 text-[11px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-900/10 hover:bg-emerald-600 hover:shadow-emerald-600/20 transition-all active:scale-[0.98]"
-                                                        >
-                                                            Submit Resolution
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
-                            )) : (
-                                <tr>
-                                    <td colSpan="3" className="px-10 py-32 text-center text-slate-400">
-                                        <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-20 text-emerald-500" />
-                                        <p className="text-xs font-black uppercase tracking-widest text-emerald-600">No active disputes</p>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination */}
-                {filteredDisputes.length > ITEMS_PER_PAGE && (
-                    <div className="flex items-center justify-between px-10 py-8 border-t border-slate-50 bg-slate-50/10">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredDisputes.length)} of {filteredDisputes.length}
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 transition-all">Previous</button>
-                            {Array.from({ length: Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
-                                <button key={page} onClick={() => setCurrentPage(page)} className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === page ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-500 hover:border-blue-200'}`}>{page}</button>
-                            ))}
-                            <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE)} className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600 disabled:opacity-30 transition-all">Next</button>
-                        </div>
-                    </div>
-                )}
+                                )}
+                            </React.Fragment>
+                        )) : (
+                            <tr>
+                                <td colSpan="3" className="px-8 py-24 text-center opacity-30">
+                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Gavel className="w-8 h-8 text-slate-200" />
+                                    </div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">No Disputes</p>
+                                    <p className="text-[8px] font-black text-slate-300 uppercase mt-2">Zero active disputes detected</p>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
+
+            {/* Tactical Pagination */}
+            {filteredDisputes.length > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-between px-2 text-[9px] font-black uppercase tracking-[0.25em] text-slate-300">
+                    <p>Showing: {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredDisputes.length)} / {filteredDisputes.length}</p>
+                    <div className="flex items-center gap-6">
+                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">PREVIOUS</button>
+                        <span className="text-slate-950 font-black">{currentPage} | {Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE)}</span>
+                        <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filteredDisputes.length / ITEMS_PER_PAGE)} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">NEXT</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
