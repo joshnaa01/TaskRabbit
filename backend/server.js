@@ -49,6 +49,7 @@ import chatRoutes from './routes/chat.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import slotRoutes from './routes/slot.routes.js';
+import chatbotRoutes from './routes/chatbot.routes.js';
 
 // Mount routes
 app.use('/api/auth', authRoutes);
@@ -62,6 +63,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/slots', slotRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Base route
 app.get('/', (req, res) => res.send('TaskRabbit Clone API is running...'));

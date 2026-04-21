@@ -77,9 +77,10 @@ const Header = () => {
 
                     {/* Navigation Links */}
                     <nav className="hidden lg:flex items-center gap-10 mx-auto">
-                        <Link to="/search" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/search' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Discovery</Link>
-                        <Link to="/nearby" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/nearby' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Map Search</Link>
-                        <Link to="/how-it-works" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/how-it-works' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>How It Works</Link>
+                        <Link to="/search" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/search' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Services</Link>
+                        <Link to="/nearby" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/nearby' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Map</Link>
+                        <Link to="/how-it-works" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/how-it-works' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Information</Link>
+                        <Link to="/contact" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:scale-105 ${location.pathname === '/contact' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-900'}`}>Support</Link>
                     </nav>
 
                     {/* Authentication and Account Actions */}
@@ -94,7 +95,7 @@ const Header = () => {
                                             fetchNotifications();
                                         }}
                                         className="relative p-2.5 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50/50 rounded-xl border border-transparent hover:border-blue-100 active:scale-95"
-                                        title="Activity Center"
+                                        title="Notifications"
                                     >
                                         <Bell className="w-4 h-4" />
                                         {unreadCount > 0 && (
@@ -108,7 +109,7 @@ const Header = () => {
                                     <Link
                                         to={`/${user.role}/messages`}
                                         className="relative p-2.5 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50/50 rounded-xl border border-transparent hover:border-blue-100 active:scale-95"
-                                        title="Communications"
+                                        title="Messages"
                                     >
                                         <MessageSquare className="w-4 h-4" />
                                         {unreadMessages > 0 && (
@@ -211,6 +212,7 @@ const Header = () => {
                             <Link onClick={() => setIsMenuOpen(false)} to="/search" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Browse</Link>
                             <Link onClick={() => setIsMenuOpen(false)} to="/nearby" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Map Search</Link>
                             <Link onClick={() => setIsMenuOpen(false)} to="/how-it-works" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">How It Works</Link>
+                            <Link onClick={() => setIsMenuOpen(false)} to="/contact" className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Contact Us</Link>
 
                             {!user && (
                                 <div className="flex flex-col gap-5 mt-12 bg-slate-50 p-8 rounded-[40px] border border-slate-100">

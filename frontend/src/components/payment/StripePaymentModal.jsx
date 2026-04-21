@@ -98,22 +98,20 @@ const CheckoutForm = ({ bookingId, amount, serviceName, onSuccess, onClose }) =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Amount Display */}
-      <div className="text-center py-6 bg-gradient-to-br from-slate-50 to-blue-50/50 rounded-3xl border border-slate-100">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Total Amount</p>
-        <p className="text-4xl font-black text-slate-900 tracking-tighter">
+      <div className="text-center py-5 bg-gradient-to-br from-slate-50 to-blue-50/20 rounded-2xl border border-slate-100">
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Amount</p>
+        <p className="text-2xl font-black text-slate-900 tracking-tighter">
           ${(amount || 0).toFixed(2)}
         </p>
-        <p className="text-xs font-bold text-slate-400 mt-1">{serviceName}</p>
+        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">{serviceName}</p>
       </div>
 
       {/* Card Input */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-2">
-          <CreditCard className="w-3 h-3" /> Card Details
-        </label>
-        <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Card Details</label>
+        <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 focus-within:border-slate-950 transition-all">
           <CardElement options={cardElementOptions} />
         </div>
       </div>
@@ -125,25 +123,24 @@ const CheckoutForm = ({ bookingId, amount, serviceName, onSuccess, onClose }) =>
       )}
 
       {/* Security Badge */}
-      <div className="flex items-center justify-center gap-2 text-slate-400">
+      <div className="flex items-center justify-center gap-2 text-slate-400 pt-1">
         <Lock className="w-3 h-3" />
-        <span className="text-[9px] font-black uppercase tracking-widest">Secured by Stripe</span>
-        <ShieldCheck className="w-3 h-3" />
+        <span className="text-[8px] font-black uppercase tracking-widest">Secured by Stripe</span>
       </div>
 
       {/* Submit Button */}
       <button
         type="submit"
         disabled={!stripe || processing || !clientSecret}
-        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 hover:shadow-2xl hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all disabled:opacity-50"
       >
         {processing ? (
           <span className="flex items-center justify-center gap-3">
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Processing Payment...
+            PROCESSING...
           </span>
         ) : (
-          `Pay $${(amount || 0).toFixed(2)}`
+          `CONFIRM & PAY $${(amount || 0).toFixed(2)}`
         )}
       </button>
     </form>
@@ -175,23 +172,23 @@ const StripePaymentModal = ({ isOpen, onClose, bookingId, amount, serviceName, o
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-white rounded-[36px] shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
+      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
         {/* Header */}
-        <div className="px-8 pt-8 pb-4 flex items-center justify-between">
+        <div className="px-6 pt-6 pb-2 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Complete Payment</h3>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Secure Checkout</p>
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Complete Payment</h3>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Secure Checkout</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-8 pb-8">
+        <div className="px-6 pb-6">
           {loadingStripe ? (
             <div className="py-16 flex flex-col items-center gap-4">
               <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />

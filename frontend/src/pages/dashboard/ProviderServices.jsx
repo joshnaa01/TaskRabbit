@@ -19,7 +19,9 @@ import {
    Eye,
    X,
    Save,
-   Image as ImageIcon
+   Image as ImageIcon,
+   Navigation,
+   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from '../../components/common/ImageUpload';
@@ -30,7 +32,7 @@ const ProviderServices = () => {
    const [services, setServices] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
-   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+   const [viewMode, setViewMode] = useState('grid');
    const [deleteModalId, setDeleteModalId] = useState(null);
     const [editModalId, setEditModalId] = useState(null);
     const [categories, setCategories] = useState([]);
@@ -38,6 +40,7 @@ const ProviderServices = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalResults, setTotalResults] = useState(0);
+    const [showAddModal, setShowAddModal] = useState(false);
 
     const fetchServices = useCallback(async () => {
        try {
@@ -52,7 +55,7 @@ const ProviderServices = () => {
        } finally {
           setLoading(false);
        }
-    }, [user._id, page]);
+    }, [page]);
 
     useEffect(() => {
        fetchServices();
@@ -78,369 +81,474 @@ const ProviderServices = () => {
        }
     };
 
-    // --- Edit Modal Component (Internal for cleaner UX) ---
-    const EditServiceModal = ({ serviceId, onClose }) => {
-       const [item, setItem] = useState(null);
-       const [updating, setUpdating] = useState(false);
-       const [form, setForm] = useState({ title: '', price: '', categoryId: '', description: '', images: [] });
+    // --- Add Service Modal ---
+    const AddServiceModal = ({ onClose }) => {
+        const [submitting, setSubmitting] = useState(false);
+        const [form, setForm] = useState({
+            title: '',
+            price: '',
+            categoryId: categories[0]?._id || '',
+            description: '',
+            images: [],
+            serviceType: 'onsite',
+            pricingType: 'fixed'
+        });
 
-       useEffect(() => {
-          const loadData = async () => {
-             const res = await api.get(`/services/${serviceId}`);
-             const d = res.data.data;
-             setItem(d);
-             setForm({
-                title: d.title,
-                price: d.price,
-                categoryId: d.categoryId?._id || d.categoryId,
-                description: d.description,
-                images: d.images || []
-             });
-          };
-          loadData();
-       }, [serviceId]);
+        const hChange = (e) => {
+            const { name, value } = e.target;
+            setForm(prev => ({ ...prev, [name]: value }));
+        };
 
-       const hChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+        const onSubmit = async (e) => {
+            e.preventDefault();
+            if (!form.title || !form.price || !form.categoryId) {
+                return toast.error('Please fill in all required fields');
+            }
+            try {
+                setSubmitting(true);
+                await api.post('/services', {
+                    ...form,
+                    price: Number(form.price)
+                });
+                toast.success('Service added successfully');
+                fetchServices();
+                onClose();
+            } catch (err) {
+                toast.error(err.response?.data?.message || 'Failed to add service');
+            } finally {
+                setSubmitting(false);
+            }
+        };
 
-       const hUpdate = async (e) => {
-          e.preventDefault();
-          setUpdating(true);
-          try {
-             await api.put(`/services/${serviceId}`, { ...form, price: Number(form.price) });
-             toast.success('Service synced successfully!');
-             fetchServices();
-             onClose();
-          } catch (err) {
-             toast.error('Update failed');
-          } finally {
-             setUpdating(false);
-          }
-       };
-
-       if (!item) return null;
-
-       return (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
-             <div className="relative bg-white rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-                <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-                    <div>
-                        <h2 className="text-sm font-black text-slate-900 tracking-tight">Edit Service</h2>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 italic">Update your details</p>
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose}></div>
+                <div className="relative bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight italic text-center w-full">Add New Service</h2>
+                        <button onClick={onClose} className="absolute right-6 top-6 p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
                     </div>
-                    <button onClick={onClose} className="p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-red-500 transition-all">
-                        <X className="w-4 h-4" />
-                    </button>
+
+                    <form onSubmit={onSubmit} className="space-y-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Title</label>
+                            <input name="title" value={form.title} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all outline-none" placeholder="e.g. Professional Plumbing" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Base Price (Rs.)</label>
+                                <input type="number" name="price" value={form.price} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all outline-none" placeholder="0" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Category</label>
+                                <select name="categoryId" value={form.categoryId} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all outline-none appearance-none">
+                                    {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Type</label>
+                                <select name="serviceType" value={form.serviceType} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all outline-none">
+                                    <option value="onsite">On-site</option>
+                                    <option value="remote">Remote</option>
+                                </select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Fee Structure</label>
+                                <select name="pricingType" value={form.pricingType} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all outline-none">
+                                    <option value="fixed">Fixed Rate</option>
+                                    <option value="hourly">Hourly Billing</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Description</label>
+                            <textarea name="description" value={form.description} onChange={hChange} rows="3" className="w-full bg-slate-50 border-none rounded-xl p-5 text-[12px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all resize-none shadow-inner leading-relaxed italic" placeholder="Details about this service..." />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Illustration</label>
+                            <div className="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-100 group/upload hover:border-blue-500/30 transition-all">
+                                <ImageUpload
+                                    label="Upload Service Image"
+                                    currentImage={form.images[0]}
+                                    onUploadSuccess={(url) => setForm(prev => ({ ...prev, images: [url] }))}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                            <Button type="button" onClick={onClose} theme="secondary" className="flex-1 rounded-2xl py-4">Cancel</Button>
+                            <Button type="submit" disabled={submitting} className="flex-1 rounded-2xl py-4 bg-slate-950 text-white shadow-xl shadow-black/20">
+                                {submitting ? 'Creating...' : 'Launch Service'}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
-                
-                <form onSubmit={hUpdate} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                    <div className="space-y-4">
-                       <div className="space-y-1.5">
-                          <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Service Name</label>
-                          <input name="title" value={form.title} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all shadow-inner" />
-                       </div>
-                       
-                       <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Price (NPR)</label>
-                             <input type="number" name="price" value={form.price} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all shadow-inner" />
-                          </div>
-                          <div className="space-y-1.5">
-                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Category</label>
-                             <select name="categoryId" value={form.categoryId} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all appearance-none shadow-inner">
-                                {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                             </select>
-                          </div>
-                       </div>
-
-                       <div className="space-y-1.5">
-                          <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Description</label>
-                          <textarea name="description" value={form.description} onChange={hChange} rows="2" className="w-full bg-slate-50 border-none rounded-xl p-4 text-[12px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all resize-none shadow-inner leading-relaxed" />
-                       </div>
-
-                       <div className="pt-1">
-                          <ImageUpload
-                             label="Service Photo"
-                             currentImage={form.images?.[0]}
-                             onUploadSuccess={(url) => setForm({ ...form, images: url ? [url] : [] })}
-                             folder="services"
-                          />
-                       </div>
-                    </div>
-
-                    <div className="flex gap-2.5 pt-1">
-                       <Button type="button" onClick={onClose} theme="secondary" className="flex-1 py-3.5 rounded-[16px] text-[8px] font-black uppercase tracking-widest border border-slate-100">Cancel</Button>
-                       <Button 
-                          type="submit" 
-                          disabled={updating}
-                          className="flex-1 py-3.5 rounded-[16px] text-[8px] font-black uppercase tracking-widest bg-blue-600 shadow-xl shadow-blue-600/20"
-                       >
-                          {updating ? 'Saving...' : (
-                              <span className="flex items-center justify-center gap-2">
-                                 <Save className="w-3 h-3" /> Save Changes
-                              </span>
-                          )}
-                       </Button>
-                    </div>
-                </form>
-             </div>
-          </div>
-       );
+            </div>
+        );
     };
 
-   if (loading) return (
-      <div className="flex flex-col items-center justify-center h-96 gap-6">
-         <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-blue-600/10"></div>
-         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading Your Services...</p>
-      </div>
-   );
+    // --- Edit Modal Component ---
+    const EditServiceModal = ({ serviceId, onClose }) => {
+        const [updating, setUpdating] = useState(false);
+        const [form, setForm] = useState({ title: '', price: '', categoryId: '', description: '', images: [], serviceType: 'onsite', pricingType: 'fixed' });
 
-   if (error) return (
-      <div className="p-12 text-center bg-red-50 rounded-[40px] border border-red-100">
-         <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-         <h3 className="text-xl font-black text-red-900 mb-2">Syncing Failed</h3>
-         <p className="text-sm font-bold text-red-600">{error}</p>
-         <button onClick={fetchServices} className="mt-6 bg-red-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Retry</button>
-      </div>
-   );
+        useEffect(() => {
+            const loadData = async () => {
+                try {
+                    const res = await api.get(`/services/${serviceId}`);
+                    const d = res.data.data;
+                    setForm({
+                        title: d.title,
+                        price: d.price,
+                        categoryId: d.categoryId?._id || d.categoryId,
+                        description: d.description,
+                        images: d.images || [],
+                        serviceType: d.serviceType || 'onsite',
+                        pricingType: d.pricingType || 'fixed'
+                    });
+                } catch (err) {
+                    toast.error('Failed to load service');
+                    onClose();
+                }
+            };
+            loadData();
+        }, [serviceId]);
 
-   return (
-      <div className="space-y-10">
-         {/* Header Section */}
-         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-               <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-600/20">
-                     <Briefcase className="w-5 h-5" />
-                  </div>
-                  <h1 className="text-4xl font-black text-slate-900 tracking-tight">My Services</h1>
-               </div>
-               <p className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Manage your service listings</p>
-            </div>
+        const hChange = (e) => {
+            const { name, value } = e.target;
+            setForm(prev => ({ ...prev, [name]: value }));
+        };
 
-            <div className="flex items-center gap-4">
-               <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
-                  <button
-                     onClick={() => setViewMode('grid')}
-                     className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}
-                  ><LayoutGrid className="w-4 h-4" />
-                  </button>
-                  <button
-                     onClick={() => setViewMode('list')}
-                     className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}
-                  >
-                     <ListIcon className="w-4 h-4" />
-                  </button>
-               </div>
+        const onSubmit = async (e) => {
+            e.preventDefault();
+            try {
+                setUpdating(true);
+                await api.put(`/services/${serviceId}`, {
+                    ...form,
+                    price: Number(form.price)
+                });
+                toast.success('Service updated');
+                fetchServices();
+                onClose();
+            } catch (err) {
+                toast.error('Failed to update');
+            } finally {
+                setUpdating(false);
+            }
+        };
 
-               <Link
-                  to="/dashboard/services/add"
-                  className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-3xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-900 hover:shadow-2xl hover:shadow-blue-900/20 transition-all active:scale-95 group"
-               >
-                  <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-                  New Service
-               </Link>
-            </div>
-         </div>
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose}></div>
+                <div className="relative bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-black text-slate-950 uppercase tracking-tight italic text-center w-full">Edit Service</h2>
+                        <button onClick={onClose} className="absolute right-6 top-6 p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+                    </div>
 
-         {services.length === 0 ? (
-            <div className="bg-white border-4 border-dashed border-slate-100 rounded-[48px] p-24 text-center">
-               <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center text-slate-300 mx-auto mb-8 border border-slate-50 shadow-inner">
-                  <Plus className="w-12 h-12" />
-               </div>
-               <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Expand Your Business</h3>
-               <p className="text-slate-400 font-bold max-w-sm mx-auto mb-10 leading-relaxed text-sm uppercase tracking-wider">Start by creating your first service profile to reach potential clients.</p>
-               <Link
-                  to="/dashboard/services/add"
-                  className="inline-flex items-center gap-4 bg-slate-900 text-white px-10 py-5 rounded-[28px] font-black text-[12px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl shadow-slate-200"
-               >
-                  Add Your First Service
-               </Link>
-            </div>
-         ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-               {services.map((service) => (
-                  <div key={service._id} className="group bg-white rounded-3xl border border-slate-50 shadow-xl shadow-blue-900/5 hover:shadow-blue-900/10 hover:-translate-y-1 transition-all p-5 flex flex-col h-full overflow-hidden relative">
-                     {/* Image Placeholder/Preview */}
-                     <div className="h-36 mb-5 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden relative">
-                        {service.images?.[0] ? (
-                           <img src={service.images[0]} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                        ) : (
-                           <div className="w-full h-full flex items-center justify-center text-slate-300">
-                              {service.serviceType === 'remote' ? <Terminal className="w-8 h-8" /> : <Briefcase className="w-8 h-8" />}
-                           </div>
-                        )}
-                        <div className="absolute top-3 right-3 flex gap-2">
-                           <span className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-md ${service.serviceType === 'remote' ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'}`}>
-                              {service.serviceType}
-                           </span>
+                    <form onSubmit={onSubmit} className="space-y-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Title</label>
+                            <input name="title" value={form.title} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/10 transition-all outline-none" placeholder="Service Name" />
                         </div>
-                     </div>
-
-                     <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                           <span className="text-[8px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-widest">{service.categoryId?.name}</span>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Price</label>
+                                <input type="number" name="price" value={form.price} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold shadow-inner" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Category</label>
+                                <select name="categoryId" value={form.categoryId} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold appearance-none shadow-inner">
+                                    {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                </select>
+                            </div>
                         </div>
-                        <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight group-hover:text-blue-600 transition-colors">{service.title}</h3>
-                        <p className="text-xs font-bold text-slate-400 line-clamp-2 leading-relaxed">{service.description}</p>
-                     </div>
-
-                     <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <div className="flex flex-col">
-                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Price</p>
-                           <p className="text-lg font-black text-slate-900">Rs. {service.price}<span className="text-[10px] text-slate-400 font-bold">/{service.pricingType === 'hourly' ? 'hr' : 'task'}</span></p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Type</label>
+                                <select name="serviceType" value={form.serviceType} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold">
+                                    <option value="onsite">On-site</option>
+                                    <option value="remote">Remote</option>
+                                </select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Structure</label>
+                                <select name="pricingType" value={form.pricingType} onChange={hChange} className="w-full bg-slate-50 border-none rounded-xl py-4 px-5 text-[13px] font-bold">
+                                    <option value="fixed">Fixed</option>
+                                    <option value="hourly">Hourly</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                           <Link to={`/dashboard/services/preview/${service._id}`} className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm">
-                              <Eye className="w-4 h-4" />
-                           </Link>
-                           <button onClick={() => setEditModalId(service._id)} className="p-2.5 bg-blue-50 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                              <Edit2 className="w-4 h-4" />
-                           </button>
-                           <button onClick={() => setDeleteModalId(service._id)} className="p-2.5 bg-red-50 text-red-400 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                              <Trash2 className="w-4 h-4" />
-                           </button>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Description</label>
+                            <textarea name="description" value={form.description} onChange={hChange} rows="3" className="w-full bg-slate-50 border-none rounded-xl p-5 text-[12px] font-bold resize-none shadow-inner leading-relaxed italic" />
                         </div>
-                     </div>
-                  </div>
-               ))}
-            </div>
-         ) : (
-            <div className="bg-white rounded-[44px] shadow-2xl shadow-blue-900/5 border border-slate-50 overflow-hidden">
-               <table className="w-full text-left border-collapse">
-                  <thead>
-                     <tr className="bg-slate-50/50">
-                        <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Service Name</th>
-                        <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Type</th>
-                        <th className="px-10 py-8 text-[11px] font-black text-slate-500 uppercase tracking-widest">Pricing</th>
-                        <th className="px-10 py-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100/50">
-                     {services.map((service) => (
-                        <tr key={service._id} className="group hover:bg-slate-50/30 transition-all">
-                           <td className="px-10 py-8">
-                              <div className="flex items-center gap-6">
-                                 <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
-                                    {service.categoryId?.icon === 'web-icon' ? <Terminal className="w-6 h-6" /> : <Briefcase className="w-6 h-6" />}
-                                 </div>
-                                 <div>
-                                    <p className="font-black text-slate-900 text-sm mb-1">{service.title}</p>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{service.categoryId?.name}</p>
-                                 </div>
-                              </div>
-                           </td>
-                           <td className="px-10 py-8">
-                              <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${service.serviceType === 'remote' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                                 {service.serviceType}
-                              </span>
-                           </td>
-                           <td className="px-10 py-8">
-                              <div className="flex flex-col">
-                                 <p className="text-sm font-black text-slate-900">Rs. {service.price}</p>
-                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{service.pricingType}</p>
-                              </div>
-                           </td>
-                           <td className="px-10 py-8 text-right">
-                              <div className="flex justify-end gap-3">
-                                 <Link to={`/dashboard/services/preview/${service._id}`} className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl transition-all">
-                                    <Eye className="w-4 h-4" />
-                                 </Link>
-                                 <button onClick={() => setEditModalId(service._id)} className="p-3 bg-blue-50 text-blue-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all shadow-sm">
-                                    <Edit2 className="w-4 h-4" />
-                                 </button>
-                                 <button onClick={() => setDeleteModalId(service._id)} className="p-3 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-sm">
-                                    <Trash2 className="w-4 h-4" />
-                                 </button>
-                              </div>
-                           </td>
-                        </tr>
-                     ))}
-                  </tbody>
-               </table>
-            </div>
-         )}
 
-         {/* Pagination Controls */}
-         {totalPages > 1 && (
-            <div className="flex flex-col items-center gap-6 pt-12 border-t border-slate-100">
-               <div className="flex items-center gap-4">
-                  <button 
-                     onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                     disabled={page === 1}
-                     className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30"
-                  >
-                     Previous
-                  </button>
-                  <div className="flex items-center gap-2 px-2">
-                     {[...Array(totalPages)].map((_, i) => (
-                        <button
-                           key={i}
-                           onClick={() => { setPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                           className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${page === i + 1 ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20 scale-110' : 'bg-white text-slate-400 border border-slate-50 hover:bg-slate-50'}`}
-                        >
-                           {i + 1}
-                        </button>
-                     ))}
-                  </div>
-                  <button 
-                     onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                     disabled={page === totalPages}
-                     className="px-6 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-30"
-                  >
-                     Next
-                  </button>
-               </div>
-               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Page {page} of {totalPages}</p>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Service Illustration</label>
+                            <div className="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-100 group/upload hover:border-blue-500/30 transition-all">
+                                <ImageUpload
+                                    label="Update Service Image"
+                                    currentImage={form.images[0]}
+                                    onUploadSuccess={(url) => setForm(prev => ({ ...prev, images: [url] }))}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-4 pt-4">
+                            <Button type="button" onClick={onClose} theme="secondary" className="flex-1 rounded-2xl py-4">Cancel</Button>
+                            <Button type="submit" disabled={updating} className="flex-1 rounded-2xl py-4 bg-blue-600 text-white shadow-xl">
+                                {updating ? 'Syncing...' : 'Save Updates'}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
             </div>
-         )}
+        );
+    };
 
-         {/* Custom Delete Modal */}
-         {deleteModalId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-               {/* Backdrop */}
-               <div 
-                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                  onClick={() => setDeleteModalId(null)}
-               ></div>
-               
-               {/* Modal */}
-               <div className="relative bg-white rounded-[24px] p-6 max-w-xs w-full shadow-xl animate-in zoom-in-95 duration-200">
-                  <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                     <AlertCircle className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-black text-slate-900 text-center mb-2 tracking-tight">Deactivate Service?</h3>
-                  <p className="text-slate-500 font-bold text-[10px] text-center mb-6 uppercase tracking-widest leading-relaxed">
-                     This service will no longer be visible to clients.
-                  </p>
-                  
-                  <div className="flex gap-2">
-                     <button
-                        onClick={() => setDeleteModalId(null)}
-                        className="flex-1 px-4 py-3 rounded-[16px] bg-slate-50 text-slate-500 font-black text-[9px] uppercase tracking-widest hover:bg-slate-100 transition-all"
-                     >
-                        Cancel
-                     </button>
-                     <button
-                        onClick={handleDelete}
-                        className="flex-1 px-4 py-3 rounded-[16px] bg-red-500 text-white font-black text-[9px] uppercase tracking-widest hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/20 transition-all"
-                     >
-                        Deactivate
-                     </button>
-                  </div>
-               </div>
-            </div>
-         )}
-
-          {/* Custom Edit Modal */}
-          {editModalId && (
-             <EditServiceModal 
-                serviceId={editModalId} 
-                onClose={() => setEditModalId(null)} 
-             />
-          )}
+    if (loading) return (
+       <div className="flex flex-col items-center justify-center h-96 gap-6">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-blue-600/10"></div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading...</p>
        </div>
-   );
+    );
+
+    if (error) return (
+       <div className="p-12 text-center bg-red-50 rounded-[40px] border border-red-100">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-xl font-black text-red-900 mb-2">Sync Error</h3>
+          <p className="text-sm font-bold text-red-600">{error}</p>
+          <button onClick={fetchServices} className="mt-6 bg-red-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Retry</button>
+       </div>
+    );
+
+    return (
+        <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            {/* Header Area */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-4 border-b border-slate-100/50">
+                <div>
+                    <h1 className="text-2xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Service Registry</h1>
+                    <div className="flex items-center gap-3 mt-3">
+                        <p className="px-2 py-0.5 bg-slate-950 text-white rounded text-[8px] font-black uppercase tracking-[0.25em] leading-none">{totalResults} Active Listings</p>
+                        <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Global Location Synced</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-950'}`}
+                        ><LayoutGrid className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-950'}`}
+                        >
+                            <ListIcon className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center gap-3 bg-slate-950 text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95 shadow-xl shadow-black/10 group/add"
+                    >
+                        <Plus className="w-4 h-4 group-hover/add:rotate-90 transition-transform duration-500" />
+                        Launch New Service
+                    </button>
+                </div>
+            </div>
+
+            {services.length === 0 ? (
+                <div className="bg-white border-2 border-dashed border-slate-100 rounded-[40px] p-24 text-center group/empty opacity-30">
+                    <Briefcase className="w-12 h-12 text-slate-100 mx-auto mb-8" />
+                    <h3 className="text-2xl font-black text-slate-950 mb-4 tracking-tight uppercase italic">No Active Records</h3>
+                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mb-10 italic">Please initialize your first service registry.</p>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="px-10 py-4 bg-slate-950 text-white rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all scale-100 group-hover/empty:scale-110 duration-500 shadow-2xl"
+                    >
+                        Initialize Service
+                    </button>
+                </div>
+            ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {services.map((service) => (
+                        <div key={service._id} className="group/card bg-white rounded-2xl border border-slate-100 p-5 flex flex-col h-full hover:shadow-2xl hover:shadow-blue-950/5 transition-all duration-700 relative ring-1 ring-slate-100/50">
+                            <div className="aspect-[16/10] mb-5 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden relative group/img shadow-inner shrink-0">
+                                {service.images?.[0] ? (
+                                    <img src={service.images[0]} alt={service.title} className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-1000" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                        {service.serviceType === 'remote' ? <Terminal className="w-12 h-12" /> : <Briefcase className="w-12 h-12" />}
+                                    </div>
+                                )}
+                                <div className="absolute top-3 left-3 z-10">
+                                    <span className={`px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-md border border-white/20 ${service.serviceType === 'remote' ? 'bg-indigo-600/90 text-white' : 'bg-emerald-600/90 text-white'}`}>
+                                        {service.serviceType}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 space-y-4 px-1 relative z-10">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-0.5 w-6 bg-blue-600 rounded-full group-hover/card:w-8 transition-all duration-700"></div>
+                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{service.categoryId?.name}</span>
+                                </div>
+                                <h3 className="text-base font-black text-slate-950 tracking-tight leading-none group-hover/card:text-blue-600 transition-colors uppercase italic truncate">{service.title}</h3>
+                                <p className="text-[11px] font-bold text-slate-400 line-clamp-3 leading-relaxed opacity-70 group-hover/card:opacity-100 transition-opacity italic">"{service.description}"</p>
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between relative z-10">
+                                <div className="flex flex-col">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none italic opacity-50 px-1">Valuation</p>
+                                    <p className="text-xl font-black text-slate-950 tracking-tighter leading-none italic">
+                                        Rs. {service.price}
+                                        <span className="text-[11px] text-slate-300 font-bold not-italic ml-1 opacity-50">/{service.pricingType === 'hourly' ? 'HR' : 'FX'}</span>
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Link to={`/dashboard/services/preview/${service._id}`} className="w-9 h-9 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-300 hover:text-slate-950 hover:bg-slate-50 transition-all shadow-sm">
+                                        <Eye className="w-4.5 h-4.5" />
+                                    </Link>
+                                    <button onClick={() => setEditModalId(service._id)} className="w-9 h-9 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                        <Edit2 className="w-4.5 h-4.5" />
+                                    </button>
+                                    <button onClick={() => setDeleteModalId(service._id)} className="w-9 h-9 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-rose-400 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                                        <Trash2 className="w-4.5 h-4.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden ring-1 ring-slate-100/50">
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr className="bg-slate-50/50 border-b border-slate-100">
+                                <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Registry Entity</th>
+                                <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Mode</th>
+                                <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Valuation</th>
+                                <th className="px-6 py-4 text-right text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Management</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100/50">
+                            {services.map((service) => (
+                                <tr key={service._id} className="group/row hover:bg-slate-50/70 transition-all duration-300">
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center gap-5">
+                                            <div className="relative w-10 h-10 shrink-0">
+                                                <div className="w-full h-full bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 text-slate-300 group-hover/row:bg-slate-950 group-hover/row:text-white transition-all shadow-sm duration-500">
+                                                    {service.serviceType === 'remote' ? <Terminal className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-950 text-[12px] uppercase tracking-tight group-hover/row:text-blue-600 transition-colors leading-none mb-1.5">{service.title}</p>
+                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest italic">{service.categoryId?.name}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-3 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border border-slate-100 shadow-sm ${service.serviceType === 'remote' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                            {service.serviceType}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <p className="text-[12px] font-black text-slate-950 tracking-tight leading-none mb-1.5 italic">Rs. {service.price}</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-40 leading-none">/{service.pricingType === 'hourly' ? 'HOUR' : 'UNIT'}</p>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2 pr-1">
+                                            <Link to={`/dashboard/services/preview/${service._id}`} className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-slate-300 hover:text-slate-950 hover:bg-slate-50 transition-all shadow-sm">
+                                                <Eye className="w-4 h-4" />
+                                            </Link>
+                                            <button onClick={() => setEditModalId(service._id)} className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => setDeleteModalId(service._id)} className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-rose-400 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">
+                    <p>PAGE: {page} / {totalPages}</p>
+                    <div className="flex items-center gap-8">
+                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">BACK</button>
+                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">NEXT</button>
+                    </div>
+                </div>
+            )}
+
+          {/* Delete Service Modal */}
+          {deleteModalId && (
+             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div 
+                   className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl transition-opacity animate-in fade-in duration-500"
+                   onClick={() => setDeleteModalId(null)}
+                ></div>
+                
+                <div className="relative bg-white rounded-[3.5rem] p-12 max-w-sm w-full shadow-[0_80px_160px_-40px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-500 border border-white/20 text-center">
+                   <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2.5rem] flex items-center justify-center mb-8 mx-auto shadow-inner border border-rose-100">
+                      <AlertCircle className="w-10 h-10" />
+                   </div>
+                   <h3 className="text-2xl font-black text-slate-950 mb-4 tracking-tighter uppercase italic">Deactivate Repository?</h3>
+                   <p className="text-slate-400 font-bold text-[11px] mb-10 uppercase tracking-[0.2em] leading-relaxed italic px-4 px-2">
+                      This entry will be marked as inactive in our records.
+                   </p>
+                   
+                   <div className="flex gap-4">
+                      <button
+                         onClick={() => setDeleteModalId(null)}
+                         className="flex-1 py-5 rounded-[2rem] bg-slate-50 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all duration-500 active:scale-95 border border-slate-100"
+                      >
+                         Cancel
+                      </button>
+                      <button
+                         onClick={handleDelete}
+                         className="flex-1 py-5 rounded-[2rem] bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 transition-all duration-500 active:scale-95 shadow-2xl shadow-rose-600/30"
+                      >
+                         Confirm
+                      </button>
+                   </div>
+                </div>
+             </div>
+          )}
+
+           {/* Edit Modal */}
+           {editModalId && (
+              <EditServiceModal 
+                 serviceId={editModalId} 
+                 onClose={() => setEditModalId(null)} 
+              />
+           )}
+
+           {/* Add Modal */}
+           {showAddModal && (
+               <AddServiceModal 
+                  onClose={() => setShowAddModal(false)}
+               />
+           )}
+        </div>
+    );
 };
 
 export default ProviderServices;

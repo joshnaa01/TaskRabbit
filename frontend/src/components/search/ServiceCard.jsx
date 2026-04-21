@@ -8,7 +8,11 @@ const ServiceCard = ({ service }) => {
       <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg shadow-black/5 ring-4 ring-white/10">
          <MapPin className="w-3 h-3 text-blue-600 fill-blue-600" />
          <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest leading-none">
-            {service.distance ? `${service.distance} km away` : 'Remote'}
+            {service.serviceType === 'remote' 
+              ? 'Remote Service' 
+              : (typeof service.distance === 'number' 
+                  ? (service.distance < 1 ? 'Less than 1 km' : `${service.distance} km away`) 
+                  : 'Nearby')}
          </span>
       </div>
 

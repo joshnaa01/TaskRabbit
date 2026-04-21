@@ -25,10 +25,10 @@ export const getServices = async (req, res) => {
       query.categoryId = category;
     }
 
-    if (minPrice || maxPrice) {
+    if ((minPrice !== undefined && minPrice !== '') || (maxPrice !== undefined && maxPrice !== '')) {
       query.price = {};
-      if (minPrice) query.price.$gte = Number(minPrice);
-      if (maxPrice) query.price.$lte = Number(maxPrice);
+      if (minPrice !== undefined && minPrice !== '') query.price.$gte = Number(minPrice);
+      if (maxPrice !== undefined && maxPrice !== '') query.price.$lte = Number(maxPrice);
     }
 
     // Pagination
@@ -158,8 +158,12 @@ export const getServicesNearby = async (req, res) => {
         $match: {
           'providerServices.isActive': true,
           ...(category && { 'providerServices.categoryId': new mongoose.Types.ObjectId(category) }),
-          ...(minPrice && { 'providerServices.price': { $gte: Number(minPrice) } }),
-          ...(maxPrice && { 'providerServices.price': { $lte: Number(maxPrice) } }),
+          ...(((minPrice !== undefined && minPrice !== '') || (maxPrice !== undefined && maxPrice !== '')) && {
+            'providerServices.price': {
+              ...(minPrice !== undefined && minPrice !== '' && { $gte: Number(minPrice) }),
+              ...(maxPrice !== undefined && maxPrice !== '' && { $lte: Number(maxPrice) })
+            }
+          }),
           ...(keyword && {
             $or: [
               { 'name': { $regex: keyword, $options: 'i' } },
@@ -195,10 +199,10 @@ export const getServicesNearby = async (req, res) => {
     // Include Remote Services (Always show, ignore distance)
     let remoteQuery = { serviceType: 'remote', isActive: true };
     if (category) remoteQuery.categoryId = category;
-    if (minPrice || maxPrice) {
+    if ((minPrice !== undefined && minPrice !== '') || (maxPrice !== undefined && maxPrice !== '')) {
       remoteQuery.price = {};
-      if (minPrice) remoteQuery.price.$gte = Number(minPrice);
-      if (maxPrice) remoteQuery.price.$lte = Number(maxPrice);
+      if (minPrice !== undefined && minPrice !== '') remoteQuery.price.$gte = Number(minPrice);
+      if (maxPrice !== undefined && maxPrice !== '') remoteQuery.price.$lte = Number(maxPrice);
     }
     if (keyword) {
       remoteQuery.$or = [

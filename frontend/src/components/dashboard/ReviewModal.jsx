@@ -30,89 +30,70 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose}></div>
             
-            <div className="relative w-full max-w-lg bg-white rounded-[48px] shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
-                {/* Visual Header Accent */}
-                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400" />
-                
-                <div className="p-10">
-                    <div className="flex justify-between items-start mb-10">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-amber-50 rounded-lg">
-                                    <Award className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Rate Your Experience</h3>
-                            </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Impression Management Protocol</p>
+            <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+                <div className="p-8">
+                    <div className="flex justify-between items-start mb-8">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900 font-display">Leave a Review</h3>
+                            <p className="text-gray-500 text-sm mt-1">Share your experience with this service provider.</p>
                         </div>
-                        <button onClick={onClose} className="p-2 text-slate-300 hover:text-slate-900 bg-slate-50 rounded-full transition-all">
-                            <X className="w-6 h-6" />
+                        <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="space-y-10">
-                        {/* Rating Logic */}
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Quantifiable Satisfaction</label>
-                            <div className="flex items-center justify-between p-8 bg-slate-50/50 rounded-[32px] border border-slate-100 ring-1 ring-slate-100 shadow-inner">
+                    <div className="space-y-6">
+                        {/* Rating Selection */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700">Rating</label>
+                            <div className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-gray-200">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button 
                                         key={star} 
                                         onClick={() => setRating(star)}
-                                        className={`transition-all duration-300 group ${star <= rating ? 'scale-110' : 'opacity-40 hover:opacity-100'}`}
+                                        className="transition-transform group hover:scale-110 focus:outline-none"
                                     >
-                                        <Star className={`w-10 h-10 ${star <= rating ? 'text-amber-500 fill-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'text-slate-300'}`} />
-                                        <p className={`text-[8px] font-black uppercase tracking-widest mt-2 text-center transition-opacity ${star === rating ? 'opacity-100' : 'opacity-0'}`}>
-                                            {star === 5 ? 'Elite' : star === 4 ? 'Great' : star === 3 ? 'Fair' : star === 2 ? 'Weak' : 'Poor'}
-                                        </p>
+                                        <Star className={`w-8 h-8 ${star <= rating ? 'text-yellow-400 fill-yellow-400 drop-shadow-sm' : 'text-gray-300'}`} />
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Qualitative Feedback */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between px-1">
-                                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none">Qualitative Intelligence</label>
-                                <span className={`text-[9px] font-black uppercase tracking-widest ${comment.length < 10 ? 'text-rose-500' : 'text-slate-400'}`}>
+                        {/* Written Feedback */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-semibold text-gray-700">Comments</label>
+                                <span className={`text-xs ${comment.length < 10 ? 'text-red-500' : 'text-gray-500'}`}>
                                     {comment.length} / 500
                                 </span>
                             </div>
-                            <div className="relative group">
+                            <div className="relative">
                                 <textarea 
-                                    className="w-full bg-white border-2 border-slate-100 rounded-[32px] p-8 text-sm font-bold text-slate-700 outline-none focus:border-amber-400 focus:ring-8 focus:ring-amber-400/5 transition-all min-h-[160px] placeholder:text-slate-300"
-                                    placeholder="Briefly describe the quality of service, communication efficiency, and technical fulfillment..."
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 min-h-[140px] placeholder:text-gray-400"
+                                    placeholder="What did you like or dislike? How was the service quality?"
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
+                                    maxLength={500}
                                 />
-                                <div className="absolute top-8 right-8 text-slate-200 group-focus-within:text-amber-400/30 transition-colors">
-                                    <MessageSquare className="w-6 h-6" />
-                                </div>
                             </div>
                         </div>
 
-                        <div className="pt-4 flex flex-col gap-4">
+                        <div className="pt-4">
                             <button 
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || comment.length < 5}
-                                className="w-full py-6 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.25em] flex items-center justify-center gap-4 hover:bg-amber-500 transition-all shadow-2xl shadow-slate-900/10 active:scale-[0.98] disabled:opacity-30 disabled:shadow-none"
+                                className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
-                                    <>
-                                        <Zap className="w-4 h-4 animate-spin" /> Recording Experience...
-                                    </>
+                                    'Submitting Review...'
                                 ) : (
                                     <>
-                                        <Heart className={`w-4 h-4 ${rating >= 4 ? 'fill-white' : ''}`} /> Record Final Impression
+                                        <Heart className={`w-4 h-4 ${rating >= 4 ? 'fill-white' : ''}`} /> Submit Review
                                     </>
                                 )}
                             </button>
-                            <div className="flex items-center justify-center gap-2 opacity-50">
-                                <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Verified Marketplace Transaction</p>
-                            </div>
                         </div>
                     </div>
                 </div>

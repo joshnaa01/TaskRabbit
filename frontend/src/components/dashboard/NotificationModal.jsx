@@ -1,5 +1,18 @@
-import React from 'react';
-import { X, Bell, CheckCircle2, MessageSquare, Info, Zap, Check, CreditCard, Clock, AlertCircle } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { 
+    X, 
+    Bell, 
+    CheckCircle2, 
+    MessageSquare, 
+    Info, 
+    Zap, 
+    Check, 
+    CreditCard, 
+    Clock, 
+    AlertCircle, 
+    ArrowRight,
+    XSquare
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -7,8 +20,7 @@ import api from '../../services/api';
 const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefresh }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
-    if (!isOpen) return null;
-
+    
     const rolePrefix = `/${user?.role || 'client'}`;
 
     const handleSingleMarkRead = async (id) => {
@@ -21,15 +33,11 @@ const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefre
     };
     
     const handleNotificationClick = (n) => {
-        // Mark as read when clicking
         if (!n.isRead) {
             handleSingleMarkRead(n._id);
         }
-        
-        // Modal close
         onClose();
 
-        // Specific navigation logic using role-prefixed routes
         if (n.type === 'message' && n.conversationId) {
             navigate(`${rolePrefix}/messages?conversationId=${n.conversationId}`);
         } else if (n.type === 'message' && n.sender?._id) {
@@ -43,145 +51,286 @@ const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefre
         }
     };
 
-    const getIcon = (type) => {
+    const getNotificationStyles = (type) => {
         switch (type) {
-            case 'message': return <MessageSquare className="w-4 h-4 text-blue-500" />;
-            case 'booking_accepted': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-            case 'booking_request': return <Zap className="w-4 h-4 text-blue-500" />;
-            case 'booking_completed': return <CreditCard className="w-4 h-4 text-indigo-500" />;
-            case 'work_submitted': return <Clock className="w-4 h-4 text-amber-500" />;
-            case 'dispute': return <AlertCircle className="w-4 h-4 text-red-500" />;
-            default: return <Info className="w-4 h-4 text-slate-400" />;
+            case 'message': 
+                return {
+                    icon: <MessageSquare className="w-4 h-4" />,
+                    color: 'text-blue-600',
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-100',
+                    gradient: 'from-blue-500 to-indigo-600'
+                };
+            case 'booking_accepted': 
+                return {
+                    icon: <CheckCircle2 className="w-4 h-4" />,
+                    color: 'text-emerald-600',
+                    bg: 'bg-emerald-50',
+                    border: 'border-emerald-100',
+                    gradient: 'from-emerald-500 to-teal-600'
+                };
+            case 'booking_request': 
+                return {
+                    icon: <Zap className="w-4 h-4" />,
+                    color: 'text-amber-600',
+                    bg: 'bg-amber-50',
+                    border: 'border-amber-100',
+                    gradient: 'from-amber-500 to-orange-600'
+                };
+            case 'booking_completed': 
+                return {
+                    icon: <CreditCard className="w-4 h-4" />,
+                    color: 'text-indigo-600',
+                    bg: 'bg-indigo-50',
+                    border: 'border-indigo-100',
+                    gradient: 'from-indigo-500 to-purple-600'
+                };
+            case 'work_submitted': 
+                return {
+                    icon: <Clock className="w-4 h-4" />,
+                    color: 'text-violet-600',
+                    bg: 'bg-violet-50',
+                    border: 'border-violet-100',
+                    gradient: 'from-violet-500 to-fuchsia-600'
+                };
+            case 'booking_rejected': 
+            case 'booking_cancelled':
+                return {
+                    icon: <XSquare className="w-4 h-4" />,
+                    color: 'text-red-600',
+                    bg: 'bg-red-50',
+                    border: 'border-red-100',
+                    gradient: 'from-red-500 to-rose-600'
+                };
+            case 'dispute': 
+                return {
+                    icon: <AlertCircle className="w-4 h-4" />,
+                    color: 'text-red-600',
+                    bg: 'bg-red-50',
+                    border: 'border-red-100',
+                    gradient: 'from-red-500 to-rose-600'
+                };
+            default: 
+                return {
+                    icon: <Info className="w-4 h-4" />,
+                    color: 'text-slate-600',
+                    bg: 'bg-slate-50',
+                    border: 'border-slate-100',
+                    gradient: 'from-slate-500 to-slate-700'
+                };
         }
     };
 
     const timeAgo = (date) => {
-        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        const d = new Date(date);
+        const now = new Date();
+        const seconds = Math.floor((now - d) / 1000);
         if (seconds < 60) return 'Just now';
         const minutes = Math.floor(seconds / 60);
         if (minutes < 60) return `${minutes}m ago`;
         const hours = Math.floor(minutes / 60);
         if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
-        return `${days}d ago`;
+        if (days < 7) return `${days}d ago`;
+        return d.toLocaleDateString();
     };
+
+    const groupedNotifications = useMemo(() => {
+        const groups = {
+            Today: [],
+            Yesterday: [],
+            Earlier: []
+        };
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        notifications.forEach(n => {
+            const date = new Date(n.createdAt);
+            if (date >= today) groups.Today.push(n);
+            else if (date >= yesterday) groups.Yesterday.push(n);
+            else groups.Earlier.push(n);
+        });
+
+        return groups;
+    }, [notifications]);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    return (
-        <div className="fixed inset-0 z-[1000] flex items-start justify-center pt-24 px-8 overflow-hidden">
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose}></div>
+    if (!isOpen) return null;
 
-            <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in slide-in-from-top-8 duration-500 relative flex flex-col max-h-[70vh]">
-                <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-                    <div>
+    return (
+        <div className="fixed inset-0 z-[2000] overflow-hidden flex justify-end">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-300" 
+                onClick={onClose}
+            />
+
+            {/* Drawer */}
+            <div className="relative w-full max-w-[450px] bg-white h-full shadow-[-20px_0_50px_-12px_rgba(0,0,0,0.1)] flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                {/* Header */}
+                <div className="px-8 pt-10 pb-6 border-b border-slate-50">
+                    <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Notifications</h2>
-                            {unreadCount > 0 && (
-                                <span className="px-2.5 py-1 bg-blue-600 text-white text-[8px] font-black rounded-full">{unreadCount} new</span>
-                            )}
+                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 rotate-3">
+                                <Bell className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Inbox</h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {unreadCount} UNREAD • {notifications.length} TOTAL
+                                </p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasks & messages</span>
-                            {unreadCount > 0 && (
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onMarkRead(); }}
-                                    className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:underline ml-2"
-                                >
-                                    Mark all as read
-                                </button>
-                            )}
-                        </div>
+                        <button 
+                            onClick={onClose}
+                            className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-2xl transition-all active:scale-95"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
-                    <button onClick={onClose} className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-100 transition-all">
-                        <X className="w-5 h-5 text-slate-400" />
-                    </button>
+
+                    {unreadCount > 0 && (
+                        <button 
+                            onClick={onMarkRead}
+                            className="mt-6 w-full py-4 bg-white border border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 group"
+                        >
+                            <Check className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            Mark all as read
+                        </button>
+                    )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#fcfdfe]">
                     {notifications.length > 0 ? (
-                        <div className="space-y-2">
-                            {notifications.map((n) => (
-                                <div 
-                                    key={n._id} 
-                                    onClick={() => handleNotificationClick(n)}
-                                    className={`group p-5 rounded-[28px] border transition-all relative cursor-pointer active:scale-[0.98] ${n.isRead ? 'bg-white border-slate-50 hover:bg-slate-50/50' : 'bg-blue-50/30 border-blue-100/50 hover:bg-white hover:shadow-lg hover:shadow-blue-500/5'}`}
-                                >
-                                    {!n.isRead && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleSingleMarkRead(n._id);
-                                            }}
-                                            className="absolute top-4 right-4 p-2 bg-white rounded-xl shadow-lg shadow-blue-500/5 border border-blue-100/50 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-500 hover:text-white"
-                                            title="Mark as read"
-                                        >
-                                            <Check className="w-3 h-3" />
-                                        </button>
-                                    )}
-
-                                    <div className="flex gap-4">
-                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${n.isRead ? 'bg-slate-50 border border-slate-100' : 'bg-white border border-blue-100'}`}>
-                                            {getIcon(n.type)}
+                        <div className="p-4 space-y-8">
+                            {Object.entries(groupedNotifications).map(([label, items]) => (
+                                items.length > 0 && (
+                                    <div key={label} className="space-y-3">
+                                        <div className="flex items-center gap-3 px-4">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</span>
+                                            <div className="flex-1 h-px bg-slate-100" />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h4 className={`text-sm truncate pr-6 ${n.isRead ? 'font-bold text-slate-600' : 'font-extrabold text-slate-900'}`}>{n.title}</h4>
-                                                {!n.isRead && <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse shrink-0 mt-1.5"></span>}
-                                            </div>
-                                            <p className="text-xs font-medium text-slate-500 leading-relaxed mb-2">{n.message}</p>
-                                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-3">{timeAgo(n.createdAt)}</p>
-                                            
-                                            {/* Quick Actions */}
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                {n.type === 'booking_completed' && n.bookingId && (
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); navigate(`/client/checkout/${n.bookingId}`); onClose(); }}
-                                                        className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center gap-1.5"
+                                        <div className="space-y-2">
+                                            {items.map((n) => {
+                                                const styles = getNotificationStyles(n.type);
+                                                return (
+                                                    <div 
+                                                        key={n._id} 
+                                                        onClick={() => handleNotificationClick(n)}
+                                                        className={`group relative p-5 rounded-[32px] border transition-all cursor-pointer ${
+                                                            n.isRead 
+                                                            ? 'bg-white border-slate-50 hover:border-slate-200 opacity-80 hover:opacity-100' 
+                                                            : 'bg-white border-blue-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5'
+                                                        }`}
                                                     >
-                                                        <CreditCard className="w-3 h-3" /> Pay Now
-                                                    </button>
-                                                )}
-                                                {n.type === 'message' && (n.conversationId || n.sender?._id) && (
-                                                    <button 
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            const url = n.conversationId ? `${rolePrefix}/messages?conversationId=${n.conversationId}` : `${rolePrefix}/messages?to=${n.sender._id}`;
-                                                            navigate(url); 
-                                                            onClose(); 
-                                                        }}
-                                                        className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-1.5"
-                                                    >
-                                                        <MessageSquare className="w-3 h-3" /> Reply
-                                                    </button>
-                                                )}
-                                            </div>
+                                                        {!n.isRead && (
+                                                            <div className="absolute top-6 left-2 w-1.5 h-1.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
+                                                        )}
+
+                                                        <div className="flex gap-4">
+                                                            <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center bg-gradient-to-tr ${styles.gradient} shadow-lg shadow-blue-500/10`}>
+                                                                <div className="text-white">
+                                                                    {styles.icon}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-start justify-between mb-1">
+                                                                    <div className="flex flex-col">
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest ${styles.color} mb-0.5`}>
+                                                                            {n.type?.replace('_', ' ')}
+                                                                        </span>
+                                                                        <h4 className={`text-sm tracking-tight leading-tight ${n.isRead ? 'font-bold text-slate-600' : 'font-black text-slate-900 line-clamp-1'}`}>
+                                                                            {n.title}
+                                                                        </h4>
+                                                                    </div>
+                                                                    <span className="text-[10px] font-medium text-slate-400 shrink-0">
+                                                                        {timeAgo(n.createdAt)}
+                                                                    </span>
+                                                                </div>
+                                                                <p className={`text-xs leading-relaxed mb-3 ${n.isRead ? 'text-slate-400 font-medium' : 'text-slate-500 font-semibold line-clamp-2'}`}>
+                                                                    {n.message}
+                                                                </p>
+                                                                
+                                                                {/* Dynamic Actions */}
+                                                                <div className="flex items-center gap-2">
+                                                                    {n.type === 'message' && (
+                                                                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                                            Reply Now <ArrowRight className="w-3 h-3" />
+                                                                        </div>
+                                                                    )}
+                                                                    {n.type === 'booking_completed' && (
+                                                                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                                                            Proceed to Pay <CreditCard className="w-3 h-3" />
+                                                                        </div>
+                                                                    )}
+                                                                    {!n.type && (
+                                                                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full group-hover:bg-slate-900 group-hover:text-white transition-all">
+                                                                            View Details <ArrowRight className="w-3 h-3" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {!n.isRead && (
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleSingleMarkRead(n._id);
+                                                                }}
+                                                                className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-emerald-500 hover:text-white rounded-xl transition-all"
+                                                                title="Mark Read"
+                                                            >
+                                                                <Check className="w-3.5 h-3.5 font-bold" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
-                                </div>
+                                )
                             ))}
                         </div>
                     ) : (
-                        <div className="py-20 text-center">
-                            <Bell className="w-12 h-12 mx-auto mb-4 text-slate-200" />
-                            <p className="font-black text-sm uppercase tracking-widest text-slate-300">No notifications yet</p>
-                            <p className="text-xs text-slate-400 mt-2">You're all caught up!</p>
+                        <div className="h-full flex flex-col items-center justify-center p-12 text-center">
+                            <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-6 animate-pulse">
+                                <Bell className="w-10 h-10 text-slate-200" />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter mb-2">All caught up!</h3>
+                            <p className="text-sm text-slate-400 font-medium max-w-[200px]">
+                                Your inbox is empty. We'll notify you when something important happens.
+                            </p>
                         </div>
                     )}
                 </div>
 
-                {notifications.length > 0 && unreadCount > 0 && (
-                    <div className="p-6 bg-slate-50 border-t border-slate-100">
-                        <button
-                            onClick={onMarkRead}
-                            className="w-full bg-white py-4 rounded-[24px] text-[11px] font-black uppercase tracking-widest border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all"
-                        >
-                            Mark all as read
-                        </button>
+                {/* Footer / Quick Stats */}
+                <div className="p-8 bg-slate-50/50 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Messages</p>
+                            <p className="text-xl font-black text-slate-900 tracking-tight">
+                                {notifications.filter(n => n.type === 'message' && !n.isRead).length}
+                            </p>
+                        </div>
+                        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Alerts</p>
+                            <p className="text-xl font-black text-slate-900 tracking-tight">
+                                {notifications.filter(n => n.type !== 'message' && !n.isRead).length}
+                            </p>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
 };
+
 export default NotificationModal;
+

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import ImageUpload from '../common/ImageUpload';
+import MapPicker from '../common/MapPicker';
 import { 
   User, 
   Mail, 
@@ -14,7 +15,10 @@ import {
   Save,
   Loader2,
   X,
-  Shield
+  Shield,
+  LocateFixed,
+  Map as MapIcon,
+  MousePointer2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,21 +27,24 @@ const ProfileModal = ({ isOpen, onClose }) => {
     const [formData, setFormData] = useState({
         name: user?.name || '',
         bio: user?.bio || '',
+        address: user?.location?.address || '',
         profilePicture: user?.profilePicture || '',
-        lat: user?.location?.coordinates[1] || '',
-        lng: user?.location?.coordinates[0] || ''
+        lat: user?.location?.coordinates[1] || 27.717,
+        lng: user?.location?.coordinates[0] || 85.324
     });
     const [isUpdating, setIsUpdating] = useState(false);
     const [locationStatus, setLocationStatus] = useState('idle');
+    const [showMap, setShowMap] = useState(false);
 
     useEffect(() => {
-        if (user) {
+        if (user && isOpen) {
             setFormData({
                 name: user.name || '',
                 bio: user.bio || '',
+                address: user.location?.address || '',
                 profilePicture: user.profilePicture || '',
-                lat: user.location?.coordinates[1] || '',
-                lng: user.location?.coordinates[0] || ''
+                lat: user.location?.coordinates[1] || 27.717,
+                lng: user.location?.coordinates[0] || 85.324
             });
         }
     }, [user, isOpen]);
@@ -49,163 +56,197 @@ const ProfileModal = ({ isOpen, onClose }) => {
         setIsUpdating(true);
         try {
             await updateProfile(formData);
-            toast.success("Profile synchronized successfully!");
+            toast.success("Profile updated successfully!");
             setTimeout(onClose, 500);
         } catch (err) {
             console.error(err);
-            toast.error("Sync failed. Check connection.");
+            toast.error("Sync failed.");
         } finally {
             setIsUpdating(false);
         }
     };
 
+    const handleCoordsSelected = async (lat, lng) => {
+        setFormData(prev => ({ ...prev, lat, lng }));
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+            const data = await res.json();
+            if (data.display_name) {
+                setFormData(prev => ({ ...prev, address: data.display_name }));
+                toast.success('Address synchronized');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const detectLocation = () => {
-        if (!navigator.geolocation) return;
+        if (!navigator.geolocation) return toast.error("Geolocation not supported");
         setLocationStatus('detecting');
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                setFormData(prev => ({ 
-                    ...prev, 
-                    lat: position.coords.latitude, 
-                    lng: position.coords.longitude 
-                }));
+                handleCoordsSelected(position.coords.latitude, position.coords.longitude);
                 setLocationStatus('captured');
-                toast.success("Location captured!");
             },
-            () => {
-                setLocationStatus('error');
-                toast.error("Location access denied.");
-            }
+            () => { setLocationStatus('error'); toast.error("Access denied"); }
         );
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center p-0 sm:p-4 md:p-8 overflow-y-auto">
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose}></div>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose}></div>
             
-            <div className="relative w-full max-w-4xl bg-white sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 my-auto min-h-full sm:min-h-0">
-                {/* Visual Identity Sidebar */}
-                <div className="md:w-80 bg-slate-50 border-r border-slate-100 p-8 flex flex-col items-center shrink-0">
-                    <button onClick={onClose} className="absolute top-6 left-6 md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm z-20">
-                        <X className="w-5 h-5 text-slate-400" />
-                    </button>
-
-                    <div className="mb-8 text-center">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Your Profile</p>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Profile Photo</h2>
+            <div className="relative w-full max-w-5xl bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-500 max-h-[90vh]">
+                {/* Profile Visual Sidebar */}
+                <div className="md:w-72 bg-slate-50 border-r border-slate-100 p-8 flex flex-col items-center shrink-0">
+                    <div className="w-full mb-8 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Provider Console</p>
+                        <h2 className="text-lg font-black text-slate-950 uppercase italic">Identity Sync</h2>
                     </div>
 
-                    <div className="bg-white p-6 rounded-[32px] shadow-xl shadow-blue-900/5 mb-8 w-full">
+                    <div className="w-full bg-white p-6 rounded-[32px] shadow-xl shadow-blue-900/5 mb-8 border border-slate-100">
                         <ImageUpload 
                             currentImage={formData.profilePicture}
                             onUploadSuccess={(url) => setFormData({...formData, profilePicture: url})}
+                            label="Avatar"
                         />
                     </div>
 
-                    <div className="w-full space-y-4">
-                        <div className="px-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Verification</span>
-                            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <div className="w-full space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">User ID</span>
+                            <span className="text-[9px] font-black text-slate-900 font-mono italic">#{user?.id?.slice(-6)}</span>
                         </div>
-                        
-                        {user?.role === 'provider' && (
-                            <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-600 rounded-lg">
-                                        <Navigation className="w-4 h-4 text-white" />
-                                    </div>
-                                    <span className="text-[9px] font-black uppercase tracking-widest">Geo-Sync</span>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-[8px] font-bold text-slate-400">
-                                        <span>LAT:</span>
-                                        <span className="text-blue-400 font-mono">{formData.lat ? Number(formData.lat).toFixed(4) : 'NULL'}</span>
-                                    </div>
-                                    <div className="flex justify-between text-[8px] font-bold text-slate-400">
-                                        <span>LNG:</span>
-                                        <span className="text-blue-400 font-mono">{formData.lng ? Number(formData.lng).toFixed(4) : 'NULL'}</span>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={detectLocation}
-                                    className="w-full py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
-                                >
-                                    {locationStatus === 'detecting' ? 'Locating...' : 'Update Geo'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="mt-auto pt-8 text-center text-slate-300">
-                        <Shield className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p className="text-[8px] font-black uppercase tracking-widest">Secure</p>
+                        <div className="p-4 bg-slate-950 rounded-2xl text-white">
+                             <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 leading-none">Security Status</p>
+                             <div className="flex items-center gap-2">
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Active Node</span>
+                             </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Form Content */}
-                <div className="flex-1 p-8 md:p-12 overflow-y-auto overflow-x-hidden">
-                    <div className="flex items-center justify-between mb-10">
+                {/* Main Form Content */}
+                <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-start mb-10">
                         <div>
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Edit Profile</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Update your name, bio, and photo</p>
+                            <h3 className="text-3xl font-black text-slate-950 tracking-tighter uppercase italic">Update Profile</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Manage your service location and identity</p>
                         </div>
-                        <button 
-                            onClick={onClose}
-                            className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all hidden md:flex"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
+                        <button onClick={onClose} className="p-3 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-2xl transition-all"><X className="w-6 h-6" /></button>
                     </div>
 
                     <form onSubmit={handleSave} className="space-y-10">
-                        <div className="space-y-8">
-                            <Input 
-                                label="Display Name"
-                                placeholder="How the world sees you"
-                                icon={<User className="w-5 h-5" />}
-                                value={formData.name}
-                                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                required
-                                className="h-14 rounded-2xl"
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Display Name</label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"><User className="w-4 h-4" /></div>
+                                        <input 
+                                            className="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 pl-12 pr-6 text-sm font-bold text-slate-950 focus:bg-white focus:border-slate-950 transition-all outline-none"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                </div>
 
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
-                                    <FileText className="w-4 h-4" /> Professional Bio / Introduction
-                                </label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Physical Address</label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-5 text-slate-300"><Navigation className="w-4 h-4" /></div>
+                                        <textarea 
+                                            rows="3"
+                                            className="w-full bg-slate-50 border-2 border-transparent rounded-[2rem] py-4 pl-12 pr-6 text-[12px] font-bold text-slate-950 focus:bg-white focus:border-blue-600 transition-all outline-none resize-none leading-relaxed italic"
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({...formData, address: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Professional Bio</label>
                                 <textarea 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-[28px] p-6 text-sm font-medium text-slate-900 focus:bg-white focus:border-blue-600 transition-all outline-none ring-0 placeholder:text-slate-300 min-h-[140px]"
-                                    placeholder="Introduce yourself to the marketplace..."
+                                    className="w-full bg-slate-50 border-2 border-transparent rounded-[2rem] p-8 text-[12px] font-bold text-slate-950 focus:bg-white focus:border-slate-950 transition-all outline-none h-[calc(100%-24px)] min-h-[160px] leading-relaxed italic"
+                                    placeholder="Tell clients about your work..."
                                     value={formData.bio}
                                     onChange={(e) => setFormData({...formData, bio: e.target.value})}
                                 />
                             </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                            <Button 
-                                type="button" 
-                                variant="outline"
-                                onClick={onClose}
-                                className="flex-1 h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest border-slate-100"
-                            >
-                                Discard Changes
-                            </Button>
-                            <Button 
-                                type="submit" 
-                                className="flex-[2] h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20"
-                                disabled={isUpdating}
-                            >
-                                {isUpdating ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" /> Synchronizing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-4 h-4" /> Save Changes
-                                    </>
+                        {/* Location Management Section (ENLARGED) */}
+                        {user?.role === 'provider' && (
+                            <div className="pt-6 border-t border-slate-100">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                    <div>
+                                        <h4 className="text-[11px] font-black text-slate-950 uppercase tracking-widest">Service Coverage Area</h4>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">Click on the map to pinpoint your deployment zone</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            type="button"
+                                            onClick={detectLocation}
+                                            className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-600/20 active:scale-95 transition-all"
+                                        >
+                                            <LocateFixed className="w-3.5 h-3.5" />
+                                            {locationStatus === 'detecting' ? 'Locating...' : 'Get My Location'}
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowMap(!showMap)}
+                                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showMap ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                        >
+                                            <MapIcon className="w-3.5 h-3.5" />
+                                            {showMap ? 'Hide Map' : 'Select on Map'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {showMap && (
+                                    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <div className="bg-slate-50 p-4 rounded-[2.5rem] border-2 border-dashed border-slate-200 relative group/map">
+                                            <div className="absolute top-8 right-8 z-20 pointer-events-none opacity-0 group-hover/map:opacity-100 transition-opacity">
+                                                <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-100 shadow-xl flex items-center gap-2">
+                                                   <MousePointer2 className="w-3 h-3 text-blue-600 animate-bounce" />
+                                                   <span className="text-[9px] font-black uppercase text-slate-900">Click to Select</span>
+                                                </div>
+                                            </div>
+                                            <MapPicker 
+                                                lat={formData.lat} 
+                                                lng={formData.lng} 
+                                                onPick={handleCoordsSelected}
+                                                height="420px"
+                                            />
+                                            <div className="mt-4 flex gap-6 px-4">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase">Latitude</span>
+                                                    <span className="text-xs font-black font-mono text-blue-600">[{Number(formData.lat).toFixed(6)}]</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase">Longitude</span>
+                                                    <span className="text-xs font-black font-mono text-blue-600">[{Number(formData.lng).toFixed(6)}]</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
-                            </Button>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4 pt-10">
+                            <button type="button" onClick={onClose} className="flex-1 py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-widest border-2 border-slate-100 text-slate-400 hover:bg-slate-50 transition-all">Discard Changes</button>
+                            <button 
+                                type="submit" 
+                                disabled={isUpdating}
+                                className="flex-[2] py-5 bg-slate-950 hover:bg-emerald-600 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] active:scale-95 transition-all duration-500"
+                            >
+                                {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                {isUpdating ? 'Synchronizing...' : 'Save Profile Metrics'}
+                            </button>
                         </div>
                     </form>
                 </div>

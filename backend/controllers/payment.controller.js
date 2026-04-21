@@ -64,7 +64,8 @@ export const confirmPayment = async (req, res) => {
     }
 
     const grossAmount = paymentIntent.amount / 100;
-    const commission = grossAmount * 0.10; // 10% platform fee
+    const commissionRate = booking.commissionPercentage ? booking.commissionPercentage / 100 : 0.30;
+    const commission = grossAmount * commissionRate; // Platform fee (default 30%)
     const netAmount = grossAmount - commission;
 
     // Create payment record
@@ -76,7 +77,7 @@ export const confirmPayment = async (req, res) => {
       grossAmount,
       platformCommission: commission,
       netProviderAmount: netAmount,
-      status: 'HELD',
+      status: booking.status === 'Completed' ? 'RELEASED' : 'HELD',
       paidAt: Date.now()
     });
 

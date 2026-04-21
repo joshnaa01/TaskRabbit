@@ -24,3 +24,109 @@
 .leaflet-container {
   font-family: 'Inter', system-ui, sans-serif !important;
 }
+
+/* =========================================
+   COMPACT UI THEME OVERRIDES
+   ========================================= */
+
+/* Compact Tables */
+table {
+  font-size: 0.875rem !important;
+}
+
+th, td {
+  padding: 12px 16px !important;
+}
+
+/* Override existing huge padding utility classes when used in table cells */
+td.py-10, td.py-12, td.py-8 {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+td.px-10, td.px-12, td.px-8 {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+td.py-32 {
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+}
+
+/* Compact Buttons & Form Controls (optional tuning) */
+button.h-14, div.h-14 {
+  height: 44px !important;
+}
+input, select {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* Compact Container Spacing */
+.p-8 { padding: 1.5rem !important; }
+.p-10 { padding: 1.5rem !important; }
+.p-12 { padding: 1.5rem !important; }
+
+/* Dashboard layout density */
+aside.w-72 {
+  width: 250px !important;
+}
+aside .gap-4, aside .py-3\.5 {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  gap: 0.75rem !important;
+}
+header.h-20 {
+  height: 60px !important;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.92; transform: scale(0.99); }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 4s ease-in-out infinite;
+}

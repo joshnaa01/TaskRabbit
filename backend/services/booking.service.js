@@ -4,6 +4,7 @@ import Notification from '../models/Notification.js';
 import Conversation from '../models/Conversation.js';
 import User from '../models/User.js';
 import Review from '../models/Review.js';
+import Payment from '../models/Payment.js';
 
 export const createBookingService = async (userId, userName, body) => {
   const { serviceId, scheduleDate, timeSlot, address, requirements, price } = body;
@@ -101,15 +102,17 @@ export const submitDeliverablesService = async (bookingId, userId, body) => {
   booking.status = 'Pending Review';
   await booking.save();
 
-  // Notify admin only — evidence is submitted to admin for review, NOT the client
+  // Notify admin and client — evidence is submitted to admin for review and client for visibility
   const admins = await User.find({ role: 'admin' });
-  for (const admin of admins) {
+  const allRecipients = [...admins.map(a => a._id), booking.clientId];
+
+  for (const recipientId of allRecipients) {
     await Notification.create({
-      recipient: admin._id,
+      recipient: recipientId,
       sender: userId,
       type: 'work_submitted',
-      title: 'Work Submitted — Admin Review Required',
-      message: `A provider has submitted deliverables for booking #${booking._id.toString().slice(-6)}. Please review and approve completion.`,
+      title: 'Work Submitted for Review',
+      message: `Provider has submitted work for booking #${booking._id.toString().slice(-6)}. Review ${recipientId.toString() === booking.clientId.toString() ? 'details' : 'and approve'}.`,
       bookingId: booking._id,
     });
   }
@@ -234,12 +237,18 @@ export const updateBookingStatusService = async (bookingId, user, body) => {
   let notificationMessage = `Your booking for "${booking.serviceId?.title || 'service'}" has been updated to: ${booking.status}`;
 
   let notificationType = 'booking_update';
-  if (status === 'Accepted') notificationType = 'booking_accepted';
-  if (status === 'Completed') notificationType = 'booking_completed';
-  if (status === 'Cancelled') notificationType = 'booking_cancelled';
-
-  if (status === 'Rejected' && rejectionReason) {
-    notificationMessage += `. Reason: ${rejectionReason}`;
+  if (status === 'Accepted') {
+    notificationType = 'booking_accepted';
+    notificationMessage = `Your booking for "${booking.serviceId?.title || 'service'}" has been ACCEPTED by the provider.`;
+  } else if (status === 'Rejected') {
+    notificationType = 'booking_rejected';
+    notificationMessage = `Your booking for "${booking.serviceId?.title || 'service'}" was REJECTED. ${rejectionReason ? `Reason: ${rejectionReason}` : ''}`;
+  } else if (status === 'Completed') {
+    notificationType = 'booking_completed';
+    notificationMessage = `Your booking for "${booking.serviceId?.title || 'service'}" is marked as COMPLETED. Please review and finalize.`;
+  } else if (status === 'Cancelled') {
+    notificationType = 'booking_cancelled';
+    notificationMessage = `The booking for "${booking.serviceId?.title || 'service'}" has been CANCELLED.`;
   }
 
   const conversation = await Conversation.findOne({ participants: { $all: [booking.clientId, booking.providerId] } });
@@ -276,15 +285,17 @@ export const completeBookingService = async (bookingId, userId, body) => {
   }
   await booking.save();
 
-  // Notify admin only — evidence goes to admin for approval, NOT the client
+  // Notify admin and client — evidence goes to admin for approval and client for awareness
   const admins = await User.find({ role: 'admin' });
-  for (const admin of admins) {
+  const allRecipients = [...admins.map(a => a._id), booking.clientId];
+
+  for (const recipientId of allRecipients) {
     await Notification.create({
-      recipient: admin._id,
+      recipient: recipientId,
       sender: userId,
       type: 'completion_review',
-      title: 'Completion Review Required',
-      message: `Provider has marked booking #${booking._id.toString().slice(-6)} as completed with evidence. Please review and approve.`,
+      title: 'Completion Sync Required',
+      message: `Task #${booking._id.toString().slice(-6)} marked as complete. Verified review ${recipientId.toString() === booking.clientId.toString() ? 'in progress' : 'required'}.`,
       bookingId: booking._id,
     });
   }
@@ -306,6 +317,12 @@ export const payBookingService = async (bookingId, userId, transactionId) => {
   booking.paid = true;
   booking.khaltiTransactionId = transactionId;
   await booking.save();
+
+  // Release payment funds in the ledger
+  await Payment.findOneAndUpdate(
+    { bookingId: booking._id },
+    { status: 'RELEASED' }
+  );
 
   const conversation = await Conversation.findOne({ participants: { $all: [booking.providerId, booking.clientId] } });
   await Notification.create({
