@@ -158,18 +158,26 @@ const DashboardLayout = ({ children }) => {
                     })}
                  </div>
 
-                 {/* Notification Bell for Client Sub-Nav */}
-                 <button
-                    onClick={() => setShowNotif(!showNotif)}
-                    className="relative p-2.5 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50/50 rounded-xl border border-transparent hover:border-blue-100 active:scale-95"
-                 >
-                    <Bell className="w-4 h-4" />
-                    {unreadCount > 0 && (
-                       <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 border-2 border-white rounded-full flex items-center justify-center text-[7px] font-black text-white">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                       </span>
-                    )}
-                 </button>
+                  {/* Profile & Notifications for Client Sub-Nav */}
+                  <div className="flex items-center gap-2">
+                     <button
+                        onClick={() => setIsProfileModalOpen(true)}
+                        className="relative p-2.5 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50/50 rounded-xl border border-transparent hover:border-blue-100 active:scale-95"
+                     >
+                        <User className="w-4 h-4" />
+                     </button>
+                     <button
+                        onClick={() => setShowNotif(!showNotif)}
+                        className="relative p-2.5 text-slate-400 hover:text-blue-600 transition-all hover:bg-blue-50/50 rounded-xl border border-transparent hover:border-blue-100 active:scale-95"
+                     >
+                        <Bell className="w-4 h-4" />
+                        {unreadCount > 0 && (
+                           <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 border-2 border-white rounded-full flex items-center justify-center text-[7px] font-black text-white">
+                              {unreadCount > 9 ? '9+' : unreadCount}
+                           </span>
+                        )}
+                     </button>
+                  </div>
               </div>
            </div>
 
@@ -192,6 +200,12 @@ const DashboardLayout = ({ children }) => {
                  {children}
               </div>
            </main>
+
+            {/* Client Profile Modal */}
+            <ProfileModal 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+            />
 
            {/* Client Notification Modal */}
            <NotificationModal 

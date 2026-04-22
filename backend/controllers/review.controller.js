@@ -61,3 +61,23 @@ export const getProviderReviews = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const updateReview = async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) return res.status(404).json({ success: false, message: 'Review not found' });
+
+    if (review.clientId.toString() !== req.user.id) {
+       return res.status(403).json({ success: false, message: 'Not authorized to edit this review' });
+    }
+
+    if (req.body.rating) review.rating = req.body.rating;
+    if (req.body.comment) review.comment = req.body.comment;
+
+    await review.save();
+
+    res.status(200).json({ success: true, data: review });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

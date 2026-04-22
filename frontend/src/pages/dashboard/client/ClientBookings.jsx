@@ -85,8 +85,14 @@ const ClientBookings = () => {
                     navigate(`/client/checkout/${bookingId}`);
                     return;
                 case 'submitReview':
-                    await api.post('/reviews', { ...extraData, bookingId });
-                    toast.success('Review submitted. Thank you!');
+                    const booking = bookings.find(b => b._id === bookingId);
+                    if (booking?.review) {
+                        await api.put(`/reviews/${booking.review._id}`, extraData);
+                        toast.success('Review updated successfully. Thank you!');
+                    } else {
+                        await api.post('/reviews', { ...extraData, bookingId });
+                        toast.success('Review submitted. Thank you!');
+                    }
                     setExpandedBooking(null);
                     break;
                 case 'dispute':
@@ -306,7 +312,15 @@ const ClientBookings = () => {
 
                                                                         {booking.review && (
                                                                             <div className="pt-4 border-t border-slate-50 mt-4">
-                                                                                <h5 className="text-[7px] font-black text-slate-300 uppercase tracking-widest mb-1.5">Your Review</h5>
+                                                                                <div className="flex items-center justify-between mb-1.5">
+                                                                                    <h5 className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Your Review</h5>
+                                                                                    <button
+                                                                                        onClick={(e) => { e.stopPropagation(); setSelectedBookingId(booking._id); setIsReviewOpen(true); }}
+                                                                                        className="text-[8px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                                                                                    >
+                                                                                        Edit
+                                                                                    </button>
+                                                                                </div>
                                                                                 <div className="flex items-center gap-1 mb-2">
                                                                                     {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < booking.review.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-100'}`} />)}
                                                                                 </div>
@@ -358,6 +372,7 @@ const ClientBookings = () => {
             <ReviewModal
                 isOpen={isReviewOpen}
                 onClose={() => setIsReviewOpen(false)}
+                initialData={bookings.find(b => b._id === selectedBookingId)?.review}
                 onSubmit={(data) => handleAction('submitReview', selectedBookingId, data)}
             />
         </div>

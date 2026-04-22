@@ -187,7 +187,7 @@ export const getBookingsService = async (user) => {
 
   const bookings = await Booking.find(query)
     .populate('serviceId')
-    .populate('clientId', 'name')
+    .populate('clientId', 'name location email')
     .populate('providerId', 'name')
     .sort({ createdAt: -1 })
     .lean(); // Use lean to allow manual attachment of review data

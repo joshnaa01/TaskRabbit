@@ -24,7 +24,8 @@ import {
     RefreshCcw,
     Star,
     Activity,
-    PlayCircle
+    PlayCircle,
+    Navigation
 } from 'lucide-react';
 import { toast } from 'sonner';
 import EvidenceModal from '../../../components/dashboard/EvidenceModal';
@@ -258,67 +259,118 @@ const ProviderBookings = () => {
                                         {expandedBooking === booking._id && (
                                             <tr className="bg-slate-50/20">
                                                 <td colSpan="3" className="px-5 py-6 border-b border-slate-100">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-
-                                                        {/* Requirements Panel */}
-                                                        <div className="space-y-3">
-                                                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                                                <FileText className="w-3 h-3" />
-                                                                Client Brief
-                                                            </h4>
-                                                            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-slate-600 text-[11px] font-medium leading-relaxed italic">
-                                                                {booking.requirements?.description || 'No specific requirements provided.'}
+                                                    <div className="space-y-6 max-w-5xl mx-auto">
+                                                        {/* Top Row: Requirements + Evidence */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            {/* Requirements Panel */}
+                                                            <div className="space-y-3">
+                                                                <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                    <FileText className="w-3 h-3" />
+                                                                    Client Brief
+                                                                </h4>
+                                                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-slate-600 text-[11px] font-medium leading-relaxed italic">
+                                                                    {booking.requirements?.description || 'No specific requirements provided.'}
+                                                                </div>
                                                             </div>
-                                                        </div>
 
-                                                        {/* Evidence/Deliverables Panel */}
-                                                        <div className="space-y-3">
-                                                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                                                                Work Evidence
-                                                            </h4>
-                                                            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                                                                {booking.deliverables?.files?.length > 0 ? (
-                                                                    <div className="space-y-3">
-                                                                        {booking.deliverables.message && (
-                                                                            <div className="bg-slate-50 p-3 rounded-lg border-l-2 border-blue-500 text-[10px] text-slate-600 font-medium leading-relaxed">
-                                                                                "{booking.deliverables.message}"
-                                                                            </div>
-                                                                        )}
-                                                                        <div className="grid grid-cols-3 gap-2">
-                                                                            {booking.deliverables.files.map((f, i) => (
-                                                                                <a key={i} href={f} target="_blank" rel="noopener noreferrer" className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 group/img">
-                                                                                    <img src={f} alt="Work submission" className="w-full h-full object-cover group-hover/img:opacity-75 transition-opacity" />
-                                                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/10">
-                                                                                        <Download className="w-4 h-4 text-white drop-shadow-md" />
-                                                                                    </div>
-                                                                                </a>
-                                                                            ))}
-                                                                        </div>
-                                                                        {booking.review && (
-                                                                            <div className="pt-3 border-t border-slate-50 mt-3">
-                                                                                <h5 className="text-[7px] font-black text-slate-300 uppercase tracking-widest mb-1.5">Client Review</h5>
-                                                                                <div className="flex items-center gap-0.5 mb-1.5">
-                                                                                    {[...Array(5)].map((_, i) => <Star key={i} className={`w-2.5 h-2.5 ${i < booking.review.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-100'}`} />)}
+                                                            {/* Evidence/Deliverables Panel */}
+                                                            <div className="space-y-3">
+                                                                <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                                                    Work Evidence
+                                                                </h4>
+                                                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                                                                    {booking.deliverables?.files?.length > 0 ? (
+                                                                        <div className="space-y-3">
+                                                                            {booking.deliverables.message && (
+                                                                                <div className="bg-slate-50 p-3 rounded-lg border-l-2 border-blue-500 text-[10px] text-slate-600 font-medium leading-relaxed">
+                                                                                    "{booking.deliverables.message}"
                                                                                 </div>
-                                                                                <p className="text-[10px] text-slate-600 font-medium italic">"{booking.review.comment}"</p>
+                                                                            )}
+                                                                            <div className="grid grid-cols-3 gap-2">
+                                                                                {booking.deliverables.files.map((f, i) => (
+                                                                                    <a key={i} href={f} target="_blank" rel="noopener noreferrer" className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 group/img">
+                                                                                        <img src={f} alt="Work submission" className="w-full h-full object-cover group-hover/img:opacity-75 transition-opacity" />
+                                                                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/10">
+                                                                                            <Download className="w-4 h-4 text-white drop-shadow-md" />
+                                                                                        </div>
+                                                                                    </a>
+                                                                                ))}
                                                                             </div>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="py-6 text-center">
-                                                                        <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 opacity-50">
-                                                                            <Clock3 className="w-4 h-4 text-slate-300" />
+                                                                            {booking.review && (
+                                                                                <div className="pt-3 border-t border-slate-50 mt-3">
+                                                                                    <h5 className="text-[7px] font-black text-slate-300 uppercase tracking-widest mb-1.5">Client Review</h5>
+                                                                                    <div className="flex items-center gap-0.5 mb-1.5">
+                                                                                        {[...Array(5)].map((_, i) => <Star key={i} className={`w-2.5 h-2.5 ${i < booking.review.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-100'}`} />)}
+                                                                                    </div>
+                                                                                    <p className="text-[10px] text-slate-600 font-medium italic">"{booking.review.comment}"</p>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Work in Progress</p>
-                                                                    </div>
-                                                                )}
+                                                                    ) : (
+                                                                        <div className="py-6 text-center">
+                                                                            <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 opacity-50">
+                                                                                <Clock3 className="w-4 h-4 text-slate-300" />
+                                                                            </div>
+                                                                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Work in Progress</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
+
+                                                        {/* Route Map: Provider → Client */}
+                                                        {booking.serviceId?.serviceType !== 'remote' && user?.location?.coordinates && booking.clientId?.location?.coordinates && (
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center justify-between">
+                                                                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <Navigation className="w-3 h-3 text-blue-500" />
+                                                                        Route to Client
+                                                                    </h4>
+                                                                    <a
+                                                                        href={`https://www.google.com/maps/dir/${user.location.coordinates[1]},${user.location.coordinates[0]}/${booking.clientId.location.coordinates[1]},${booking.clientId.location.coordinates[0]}`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-1.5 active:scale-95 shadow-lg shadow-blue-600/20"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <Navigation className="w-3 h-3" />
+                                                                        Get Directions
+                                                                    </a>
+                                                                </div>
+                                                                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                                                    <iframe
+                                                                        title="Route Map"
+                                                                        width="100%"
+                                                                        height="300"
+                                                                        frameBorder="0"
+                                                                        style={{ border: 0 }}
+                                                                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${Math.min(user.location.coordinates[0], booking.clientId.location.coordinates[0]) - 0.02},${Math.min(user.location.coordinates[1], booking.clientId.location.coordinates[1]) - 0.02},${Math.max(user.location.coordinates[0], booking.clientId.location.coordinates[0]) + 0.02},${Math.max(user.location.coordinates[1], booking.clientId.location.coordinates[1]) + 0.02}&layer=mapnik&marker=${booking.clientId.location.coordinates[1]},${booking.clientId.location.coordinates[0]}`}
+                                                                    />
+                                                                    <div className="flex items-center justify-between p-3 bg-slate-50 border-t border-slate-100">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                                                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">You</span>
+                                                                            </div>
+                                                                            <ArrowRight className="w-3 h-3 text-slate-300" />
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                                                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{booking.clientId?.name}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">
+                                                                            {booking.clientId?.location?.address ? booking.clientId.location.address.split(',').slice(0, 2).join(',') : 'Client Location'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
                                         )}
+
                                     </React.Fragment>
                                 ));
                             })()}

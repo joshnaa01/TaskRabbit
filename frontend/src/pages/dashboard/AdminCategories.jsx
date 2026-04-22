@@ -72,11 +72,11 @@ const AdminCategories = () => {
             {/* Tactical Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-slate-100/50">
                 <div>
-                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Service Categories</h1>
+                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Categories</h1>
                     <div className="flex items-center gap-2 mt-2">
                         <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{categories.length} Categories</p>
                         <div className="w-1 h-1 bg-emerald-500 rounded-full"></div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System Categories active</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Active</p>
                     </div>
                 </div>
                 <button

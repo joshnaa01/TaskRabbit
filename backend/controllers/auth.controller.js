@@ -52,6 +52,10 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
+    if (user.status === 'suspended' || user.status === 'deactivated') {
+      return res.status(403).json({ success: false, message: 'Your account has been blocked/suspended by an admin. You cannot log in right now.' });
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -88,6 +92,9 @@ export const googleLogin = async (req, res) => {
     });
 
     if (user) {
+      if (user.status === 'suspended' || user.status === 'deactivated') {
+        return res.status(403).json({ success: false, message: 'Your account has been blocked/suspended by an admin. You cannot log in right now.' });
+      }
       if (!user.googleId) {
         user.googleId = googleId;
         await user.save();
@@ -145,7 +152,7 @@ export const updateProfile = async (req, res) => {
     if (bio !== undefined) user.bio = bio;
     if (profilePicture) user.profilePicture = profilePicture;
 
-    if (user.role === 'provider' && lat && lng) {
+    if (lat && lng) {
       const newLoc = {
         type: 'Point',
         coordinates: [parseFloat(lng), parseFloat(lat)],
@@ -154,14 +161,16 @@ export const updateProfile = async (req, res) => {
 
       user.location = newLoc;
 
-      // Sync to all of provider's services
-      try {
-        await Service.updateMany(
-          { providerId: user._id },
-          { $set: { location: newLoc } }
-        );
-      } catch (e) {
-        console.error("Service location sync failed:", e);
+      // Sync to all of provider's services (provider only)
+      if (user.role === 'provider') {
+        try {
+          await Service.updateMany(
+            { providerId: user._id },
+            { $set: { location: newLoc } }
+          );
+        } catch (e) {
+          console.error("Service location sync failed:", e);
+        }
       }
     }
 
