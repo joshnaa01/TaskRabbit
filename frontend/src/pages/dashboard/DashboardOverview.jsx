@@ -19,34 +19,14 @@ import {
     ArrowRight,
     Clock,
     DollarSign,
-    Inbox,
-    LocateFixed
+    Inbox
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     AreaChart, Area, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
-// Fix Leaflet marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-const miniMapIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [20, 32],
-    iconAnchor: [10, 32],
-    popupAnchor: [1, -34],
-    shadowSize: [32, 32]
-});
 
 const DashboardOverview = () => {
     const { user } = useAuth();
@@ -495,39 +475,7 @@ const DashboardOverview = () => {
                         </div>
                     </div>
 
-                    {/* Quick Map Widget (Provider Only) */}
-                    {isProvider && (
-                        <div className="bg-slate-950 p-6 rounded-xl text-white shadow-2xl shadow-blue-900/10 group/map relative overflow-hidden transition-all duration-500 hover:shadow-blue-500/10 border border-white/5">
-                            <div className="flex items-center justify-between mb-4 relative z-10">
-                                <div>
-                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-1 text-blue-400">
-                                        <LocateFixed className="w-4 h-4 group-hover/map:rotate-12 transition-transform" />
-                                        Deployment Center
-                                    </h2>
-                                    <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] leading-none">Global Sync Status: Active</p>
-                                </div>
-                                <Link to="/dashboard/profile" className="p-2 bg-white/5 rounded-lg hover:bg-blue-600 transition-all border border-white/10">
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </div>
-                            
-                            <div className="h-40 w-full rounded-lg overflow-hidden border border-white/5 shadow-inner relative z-10">
-                                <MapContainer center={[user?.location?.coordinates[1] || 27.717, user?.location?.coordinates[0] || 85.324]} zoom={13} zoomControl={false} className="h-full w-full grayscale-[0.5] contrast-[1.2] opacity-80 group-hover/map:opacity-100 transition-opacity duration-1000">
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                    <Marker position={[user?.location?.coordinates[1] || 27.717, user?.location?.coordinates[0] || 85.324]} icon={miniMapIcon} />
-                                </MapContainer>
-                            </div>
-                            
-                            <div className="mt-4 flex flex-col gap-2 relative z-10">
-                                <div className="p-2.5 bg-white/5 rounded-lg border border-white/5">
-                                    <p className="text-[7px] font-black text-white/40 uppercase tracking-widest leading-none mb-1.5 leading-none">Network Address</p>
-                                    <p className="text-[9px] font-black text-blue-100 truncate italic">"{user?.location?.address || 'Searching for physical node...'}"</p>
-                                </div>
-                            </div>
-                            
-                            <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:20px_20px] transition-all group-hover:scale-110"></div>
-                        </div>
-                    )}
+
                 </div>
             </div>
         </div>

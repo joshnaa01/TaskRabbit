@@ -108,7 +108,7 @@ const AdminDashboard = () => {
           </h1>
           <div className="flex items-center gap-2 mt-2">
             <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></span>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Platform Snapshot</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Overview</p>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl border border-slate-100 shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-200">
               {[
                 { id: 'overview', label: 'Overview', icon: LayoutGrid },
-                { id: 'statistics', label: 'Detailed Stats', icon: BarChart3 }
+                { id: 'statistics', label: 'Stats', icon: BarChart3 }
               ].map((v) => (
                 <button
                   key={v.id}
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
         <StatCard
           title="Revenue"
           value={`Rs. ${stats?.revenue?.platformEarnings?.toLocaleString() || 0}`}
-          subtitle="TOTAL EARNINGS"
+          subtitle="EARNINGS"
           icon={TrendingUp}
           colorClass="bg-emerald-50 text-emerald-600"
           gradient="from-emerald-400 to-transparent"
@@ -167,7 +167,7 @@ const AdminDashboard = () => {
         <StatCard
           title="Transactions"
           value={`Rs. ${stats?.revenue?.totalVolume?.toLocaleString() || 0}`}
-          subtitle="TOTAL VOLUME"
+          subtitle="VOLUME"
           icon={DollarSign}
           colorClass="bg-indigo-50 text-indigo-600"
           gradient="from-indigo-400 to-transparent"

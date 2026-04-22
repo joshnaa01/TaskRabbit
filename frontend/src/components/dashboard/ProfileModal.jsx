@@ -178,13 +178,12 @@ const ProfileModal = ({ isOpen, onClose }) => {
                             </div>
                         </div>
 
-                        {/* Location Management Section (ENLARGED) */}
-                        {user?.role === 'provider' && (
-                            <div className="pt-6 border-t border-slate-100">
+                        {/* Location Management Section */}
+                        <div className="pt-6 border-t border-slate-100">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                     <div>
-                                        <h4 className="text-[11px] font-black text-slate-950 uppercase tracking-widest">Service Coverage Area</h4>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">Click on the map to pinpoint your deployment zone</p>
+                                        <h4 className="text-[11px] font-black text-slate-950 uppercase tracking-widest">{user?.role === 'provider' ? 'Service Area' : 'My Location'}</h4>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Click on the map or use current location</p>
                                     </div>
                                     <div className="flex gap-2">
                                         <button 
@@ -235,7 +234,6 @@ const ProfileModal = ({ isOpen, onClose }) => {
                                     </div>
                                 )}
                             </div>
-                        )}
 
                         <div className="flex gap-4 pt-10">
                             <button type="button" onClick={onClose} className="flex-1 py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-widest border-2 border-slate-100 text-slate-400 hover:bg-slate-50 transition-all">Discard Changes</button>
@@ -245,7 +243,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                                 className="flex-[2] py-5 bg-slate-950 hover:bg-emerald-600 text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] active:scale-95 transition-all duration-500"
                             >
                                 {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                {isUpdating ? 'Synchronizing...' : 'Save Profile Metrics'}
+                                {isUpdating ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </form>

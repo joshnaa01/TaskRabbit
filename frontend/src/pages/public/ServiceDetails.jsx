@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import ImageUpload from '../../components/common/ImageUpload';
+import MapPicker from '../../components/common/MapPicker';
 import {
    Star,
    MapPin,
@@ -16,7 +17,9 @@ import {
    Upload,
    ChevronRight,
    ArrowLeft,
-   Loader2
+   Loader2,
+   LocateFixed,
+   Navigation
 } from 'lucide-react';
 import { toast } from 'sonner';
 import StripePaymentModal from '../../components/payment/StripePaymentModal';
@@ -38,6 +41,12 @@ const ServiceDetails = () => {
    const [selectedSlot, setSelectedSlot] = useState(null);
    const [slotsLoading, setSlotsLoading] = useState(false);
    const [paymentModal, setPaymentModal] = useState({ open: false, booking: null });
+   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+   const [clientLocation, setClientLocation] = useState({
+      lat: user?.location?.coordinates?.[1] || null,
+      lng: user?.location?.coordinates?.[0] || null,
+      address: user?.location?.address || ''
+   });
 
    useEffect(() => {
       const fetchData = async () => {
@@ -75,18 +84,61 @@ const ServiceDetails = () => {
       fetchSlots();
    }, [bookingData.scheduleDate, service?.providerId?._id]);
 
+   const handleLocationPick = async (lat, lng) => {
+      setClientLocation(prev => ({ ...prev, lat, lng }));
+      try {
+         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+         const data = await res.json();
+         if (data.display_name) {
+            setClientLocation(prev => ({ ...prev, address: data.display_name }));
+         }
+      } catch (err) {
+         console.error(err);
+      }
+   };
+
+   const detectClientLocation = () => {
+      if (!navigator.geolocation) return toast.error('Geolocation not supported');
+      navigator.geolocation.getCurrentPosition(
+         (pos) => {
+            handleLocationPick(pos.coords.latitude, pos.coords.longitude);
+            toast.success('Location detected!');
+         },
+         () => toast.error('Location access denied')
+      );
+   };
+
+   const saveClientLocation = async () => {
+      if (!clientLocation.lat || !clientLocation.lng) return toast.error('Please select a location first');
+      try {
+         await api.put('/auth/profile', {
+            lat: clientLocation.lat,
+            lng: clientLocation.lng,
+            address: clientLocation.address
+         });
+         toast.success('Location saved!');
+         setShowLocationPrompt(false);
+      } catch (err) {
+         toast.error('Failed to save location');
+      }
+   };
+
    const handleBooking = async (e) => {
       e.preventDefault();
       if (!user) return navigate('/login');
 
-      // Restrict services like 'Tutoring' as they require daily commitment (Escrow demo limited to one-off)
       if (service.categoryId?.name?.toLowerCase().includes('tutoring')) {
          return toast.warning("Escrow booking is currently optimized for one-off tasks. Multi-day services are disabled.");
+      }
+
+      // If physical service and client has no location, prompt them
+      if (service.serviceType !== 'remote' && !user.location?.coordinates?.length && !clientLocation.lat) {
+         setShowLocationPrompt(true);
+         return toast.info('Please set your location first so the provider knows where to come.');
       }
       
       setSubmitting(true);
       try {
-         // 1. Create the booking record (Pending status)
          await api.post('/bookings', {
             serviceId: service._id,
             scheduleDate: bookingData.scheduleDate,
@@ -94,19 +146,18 @@ const ServiceDetails = () => {
                start: selectedSlot.start,
                end: selectedSlot.end
             },
-            address: user.location?.address || 'Remote Location',
+            address: clientLocation.address || user.location?.address || 'Remote Location',
             requirements: {
                description: bookingData.requirements
             },
             basePrice: service.price
          });
 
-         // 2. Direct to dashboard without immediate payment
-         toast.success("Booking request transmitted! Awaiting provider acceptance.");
+         toast.success("Booking request sent! Awaiting provider acceptance.");
          navigate('/client/bookings');
 
       } catch (err) {
-         toast.error(err.response?.data?.message || "Transmission failed.");
+         toast.error(err.response?.data?.message || "Booking failed.");
       } finally {
          setSubmitting(false);
       }
@@ -320,6 +371,29 @@ const ServiceDetails = () => {
                               />
                            </div>
                         </div>
+
+                        {/* Location Prompt - only if physical service & no client location */}
+                        {service.serviceType !== 'remote' && (showLocationPrompt || (!user?.location?.coordinates?.length && !clientLocation.lat)) && (
+                           <div className="space-y-4 pt-4 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                              <div className="flex items-center gap-2">
+                                 <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                                 <label className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Set Your Location</label>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-bold leading-relaxed">The provider needs your location to serve you. Pick on map or detect automatically.</p>
+                              <div className="flex gap-2">
+                                 <button type="button" onClick={detectClientLocation} className="flex-1 py-2.5 bg-blue-600 rounded-xl text-[8px] font-black uppercase tracking-widest text-white flex items-center justify-center gap-1.5 hover:bg-blue-700 transition-all active:scale-95">
+                                    <LocateFixed className="w-3 h-3" /> Get My Location
+                                 </button>
+                              </div>
+                              <MapPicker lat={clientLocation.lat || 27.717} lng={clientLocation.lng || 85.324} onPick={handleLocationPick} height="200px" />
+                              {clientLocation.address && (
+                                 <p className="text-[9px] font-bold text-blue-300 truncate italic px-1">{clientLocation.address}</p>
+                              )}
+                              <button type="button" onClick={saveClientLocation} disabled={!clientLocation.lat} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest disabled:opacity-30 transition-all active:scale-95">
+                                 Save Location & Continue
+                              </button>
+                           </div>
+                        )}
 
                         <Button
                            type="submit"

@@ -66,11 +66,11 @@ const AdminBookings = () => {
             {/* Header & Filter Dock */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-slate-100/50">
                 <div>
-                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase">Booking Operations</h1>
+                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase">Bookings</h1>
                     <div className="flex items-center gap-2 mt-2">
                        <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{bookings.length} TOTAL</p>
                        <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
-                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System live status</p>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Active</p>
                    </div>
                 </div>
                 <div className="flex items-center gap-1 bg-white border border-slate-200 p-0.5 rounded-lg">
@@ -100,10 +100,10 @@ const AdminBookings = () => {
                 <table className="w-full text-left">
                     <thead>
                         <tr className="bg-slate-50/50 border-b border-slate-100/50">
-                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Service Context</th>
-                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Parties</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Service</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Users</th>
                             <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status</th>
-                            <th className="px-5 py-2.5 text-right text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Matrix Action</th>
+                            <th className="px-5 py-2.5 text-right text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -150,7 +150,7 @@ const AdminBookings = () => {
                                                     onClick={(e) => { e.stopPropagation(); handleVerdict(booking._id, 'Rejected'); }}
                                                     className="px-3 py-1.5 bg-red-600 text-white rounded text-[8px] font-black uppercase tracking-widest hover:bg-slate-950 transition-all shadow-sm"
                                                 >
-                                                    ANNUL
+                                                    CANCEL
                                                 </button>
                                             </div>
                                         ) : (
@@ -158,7 +158,7 @@ const AdminBookings = () => {
                                                  <button 
                                                      className={`px-3 py-1.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${expandedBooking === booking._id ? 'bg-slate-950 text-white' : 'bg-white border border-slate-200 text-slate-400 hover:text-slate-950'}`}
                                                  >
-                                                     INSPECT
+                                                     VIEW
                                                  </button>
                                             </div>
                                         )}
@@ -171,15 +171,15 @@ const AdminBookings = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-3">
                                                         <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 flex items-center gap-2 italic">
-                                                            <Activity className="w-2.5 h-2.5" /> Client Requirement Stream
+                                                            <Activity className="w-2.5 h-2.5" /> Client Notes
                                                         </h4>
                                                         <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-100 text-[10px] text-slate-600 leading-relaxed font-bold italic">
-                                                            "{booking.requirements?.description || 'Null protocol description.'}"
+                                                            "{booking.requirements?.description || 'No notes provided.'}"
                                                         </div>
                                                     </div>
                                                     <div className="space-y-3">
                                                         <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 flex items-center gap-2 italic">
-                                                            <Shield className="w-2.5 h-2.5" /> Provider Evidence Vault
+                                                            <Shield className="w-2.5 h-2.5" /> Provider Work
                                                         </h4>
                                                         <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-100 space-y-4">
                                                             {booking.deliverables?.message && <p className="text-[9px] font-bold text-slate-500 italic bg-white p-2.5 rounded border-l-2 border-emerald-500">"{booking.deliverables.message}"</p>}
@@ -193,7 +193,7 @@ const AdminBookings = () => {
                                                             {(!booking.deliverables?.message && !booking.deliverables?.files?.length) && (
                                                                 <div className="py-4 text-center opacity-40">
                                                                     <Activity className="w-4 h-4 mx-auto mb-1 text-slate-300" />
-                                                                    <p className="text-[7px] font-black text-slate-300 uppercase tracking-widest">No matrix submission detected</p>
+                                                                    <p className="text-[7px] font-black text-slate-300 uppercase tracking-widest">No work submitted</p>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -209,13 +209,13 @@ const AdminBookings = () => {
                 </table>
             </div>
 
-            {/* Tactical Pagination Console */}
+            {/* Pagination */}
             <div className="flex items-center justify-between px-2 text-[9px] font-black uppercase tracking-[0.25em] text-slate-300">
-                <p>INDEX: {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, sortedBookings.length)} / {sortedBookings.length}</p>
+                <p>Showing: {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, sortedBookings.length)} / {sortedBookings.length}</p>
                 <div className="flex items-center gap-6">
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">PREV_SEQ</button>
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">PREV</button>
                     <span className="text-slate-900 font-black">{currentPage} | {totalPages || 1}</span>
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">NEXT_SEQ</button>
+                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="hover:text-slate-950 disabled:opacity-20 transition-all font-black">NEXT</button>
                 </div>
             </div>
         </div>

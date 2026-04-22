@@ -78,11 +78,11 @@ const AdminDisputes = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-slate-100/50">
                 <div>
-                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Dispute Management</h1>
+                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Disputes</h1>
                     <div className="flex items-center gap-2 mt-2">
                        <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{bookings.length} DISPUTES</p>
                        <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
-                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System Active</p>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Active</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -107,8 +107,8 @@ const AdminDisputes = () => {
                 <table className="w-full text-left">
                     <thead>
                         <tr className="bg-slate-50/50 border-b border-slate-50">
-                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Dispute Details</th>
-                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Involved Users</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Details</th>
+                            <th className="px-5 py-2.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Users</th>
                             <th className="px-5 py-2.5 text-right text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                         </tr>
                     </thead>
@@ -181,13 +181,13 @@ const AdminDisputes = () => {
                                                             onClick={() => setResolutionStatus('Completed')}
                                                             className={`py-2 px-4 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${resolutionStatus === 'Completed' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
                                                         >
-                                                            COMPLETE DISPUTE
+                                                            COMPLETE
                                                         </button>
                                                         <button
                                                             onClick={() => setResolutionStatus('Cancelled')}
                                                             className={`py-2 px-4 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${resolutionStatus === 'Cancelled' ? 'bg-red-600 text-white border-red-600' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
                                                         >
-                                                            CANCEL DISPUTE
+                                                            CANCEL
                                                         </button>
                                                     </div>
 
@@ -214,7 +214,7 @@ const AdminDisputes = () => {
                                                                 </div>
                                                             )}
                                                             <div className="space-y-1.5">
-                                                                <label className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1 italic">Resolution Verdict</label>
+                                                                <label className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1 italic">Verdict</label>
                                                                 <textarea
                                                                     value={verdict}
                                                                     onChange={e => setVerdict(e.target.value)}
@@ -230,7 +230,7 @@ const AdminDisputes = () => {
                                                         disabled={actionLoading === booking._id}
                                                         className="w-full py-2.5 rounded bg-slate-950 text-white text-[9px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl active:scale-95"
                                                     >
-                                                        {actionLoading === booking._id ? 'SAVING...' : 'RESOLVE DISPUTE'}
+                                                        {actionLoading === booking._id ? 'SAVING...' : 'RESOLVE'}
                                                     </button>
                                                 </div>
                                             </div>

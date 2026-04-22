@@ -113,11 +113,11 @@ const AdminUsers = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-slate-100/50">
                 <div>
-                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">User Registry</h1>
+                    <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Users</h1>
                     <div className="flex items-center gap-2 mt-2">
                         <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">Total: {users.length}</p>
                         <div className="w-1 h-1 bg-emerald-500 rounded-full"></div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System Online</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Active</p>
                     </div>
                 </div>
 
@@ -166,8 +166,8 @@ const AdminUsers = () => {
                     <table className="w-full text-left align-middle whitespace-nowrap">
                         <thead className="bg-slate-50/50 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100">
                             <tr>
-                                <th className="px-5 py-2.5">User Information</th>
-                                <th className="px-5 py-2.5 text-center">Status & Verification</th>
+                                <th className="px-5 py-2.5">User</th>
+                                <th className="px-5 py-2.5 text-center">Status</th>
                                 <th className="px-5 py-2.5 text-right">Actions</th>
                             </tr>
                         </thead>

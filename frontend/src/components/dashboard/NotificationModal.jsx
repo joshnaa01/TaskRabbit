@@ -31,6 +31,15 @@ const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefre
             console.error(err);
         }
     };
+
+    const handleDeleteNotification = async (id) => {
+        try {
+            await api.delete(`/notifications/${id}`);
+            if (onRefresh) onRefresh();
+        } catch (err) {
+            console.error(err);
+        }
+    };
     
     const handleNotificationClick = (n) => {
         if (!n.isRead) {
@@ -222,73 +231,81 @@ const NotificationModal = ({ isOpen, onClose, notifications, onMarkRead, onRefre
                                                     <div 
                                                         key={n._id} 
                                                         onClick={() => handleNotificationClick(n)}
-                                                        className={`group relative p-5 rounded-[32px] border transition-all cursor-pointer ${
+                                                        className={`group relative p-3 rounded-2xl border transition-all cursor-pointer ${
                                                             n.isRead 
                                                             ? 'bg-white border-slate-50 hover:border-slate-200 opacity-80 hover:opacity-100' 
-                                                            : 'bg-white border-blue-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5'
+                                                            : 'bg-white border-blue-100 shadow-sm hover:shadow-md hover:-translate-y-0.5'
                                                         }`}
                                                     >
                                                         {!n.isRead && (
-                                                            <div className="absolute top-6 left-2 w-1.5 h-1.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
+                                                            <div className="absolute top-4 left-1 w-1.5 h-1.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
                                                         )}
 
-                                                        <div className="flex gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center bg-gradient-to-tr ${styles.gradient} shadow-lg shadow-blue-500/10`}>
-                                                                <div className="text-white">
+                                                        <div className="flex gap-3">
+                                                            <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center bg-gradient-to-tr ${styles.gradient} shadow-lg shadow-blue-500/10`}>
+                                                                <div className="text-white scale-75">
                                                                     {styles.icon}
                                                                 </div>
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-start justify-between mb-1">
                                                                     <div className="flex flex-col">
-                                                                        <span className={`text-[9px] font-black uppercase tracking-widest ${styles.color} mb-0.5`}>
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest ${styles.color}`}>
                                                                             {n.type?.replace('_', ' ')}
                                                                         </span>
-                                                                        <h4 className={`text-sm tracking-tight leading-tight ${n.isRead ? 'font-bold text-slate-600' : 'font-black text-slate-900 line-clamp-1'}`}>
+                                                                        <h4 className={`text-[13px] tracking-tight leading-tight ${n.isRead ? 'font-bold text-slate-600' : 'font-black text-slate-900 line-clamp-1'}`}>
                                                                             {n.title}
                                                                         </h4>
                                                                     </div>
-                                                                    <span className="text-[10px] font-medium text-slate-400 shrink-0">
-                                                                        {timeAgo(n.createdAt)}
-                                                                    </span>
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        <span className="text-[10px] font-medium text-slate-400">
+                                                                            {timeAgo(n.createdAt)}
+                                                                        </span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            {!n.isRead && (
+                                                                                <button 
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleSingleMarkRead(n._id);
+                                                                                    }}
+                                                                                    className="p-1 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-all"
+                                                                                    title="Mark Read"
+                                                                                >
+                                                                                    <Check className="w-4 h-4 text-emerald-500" />
+                                                                                </button>
+                                                                            )}
+                                                                            <button 
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleDeleteNotification(n._id);
+                                                                                }}
+                                                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
+                                                                                title="Delete"
+                                                                            >
+                                                                                <X className="w-4 h-4 text-red-500" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                                 <p className={`text-xs leading-relaxed mb-3 ${n.isRead ? 'text-slate-400 font-medium' : 'text-slate-500 font-semibold line-clamp-2'}`}>
                                                                     {n.message}
                                                                 </p>
                                                                 
                                                                 {/* Dynamic Actions */}
-                                                                <div className="flex items-center gap-2">
+                                                                <div className="flex items-center gap-2 mt-1">
                                                                     {n.type === 'message' && (
-                                                                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                                                            Reply Now <ArrowRight className="w-3 h-3" />
+                                                                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                                            Reply <ArrowRight className="w-3 h-3" />
                                                                         </div>
                                                                     )}
                                                                     {n.type === 'booking_completed' && (
-                                                                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                                                                            Proceed to Pay <CreditCard className="w-3 h-3" />
-                                                                        </div>
-                                                                    )}
-                                                                    {!n.type && (
-                                                                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full group-hover:bg-slate-900 group-hover:text-white transition-all">
-                                                                            View Details <ArrowRight className="w-3 h-3" />
+                                                                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                                                            Pay <CreditCard className="w-3 h-3" />
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                         </div>
-
-                                                        {!n.isRead && (
-                                                            <button 
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleSingleMarkRead(n._id);
-                                                                }}
-                                                                className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-emerald-500 hover:text-white rounded-xl transition-all"
-                                                                title="Mark Read"
-                                                            >
-                                                                <Check className="w-3.5 h-3.5 font-bold" />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 );
                                             })}

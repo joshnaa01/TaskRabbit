@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     X, 
     Star, 
@@ -9,17 +9,29 @@ import {
     Zap
 } from 'lucide-react';
 
-const ReviewModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
+const ReviewModal = ({ isOpen, onClose, onSubmit, initialData }) => {
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData) {
+                setRating(initialData.rating || 5);
+                setComment(initialData.comment || '');
+            } else {
+                setRating(5);
+                setComment('');
+            }
+        }
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
-            await onSubmit(bookingId, { rating, comment });
+            await onSubmit({ rating, comment });
             onClose();
         } catch (err) {
             console.error("Review error:", err);

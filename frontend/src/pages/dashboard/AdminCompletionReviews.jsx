@@ -77,11 +77,11 @@ const AdminCompletionReviews = () => {
             {/* Adjudication Surveillance Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-slate-100/50">
                 <div>
-                   <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Work Verification</h1>
+                   <h1 className="text-xl font-black text-slate-950 tracking-tighter leading-none uppercase italic">Reviews</h1>
                    <div className="flex items-center gap-2 mt-2">
-                       <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{bookings.length} PENDING VERIFICATION</p>
+                       <p className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[7px] font-black uppercase tracking-widest leading-none">{bookings.length} PENDING</p>
                        <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
-                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">System Active</p>
+                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Active</p>
                    </div>
                 </div>
                 
@@ -145,7 +145,7 @@ const AdminCompletionReviews = () => {
                                 <div className="space-y-3">
                                     <h4 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Submitted Work</h4>
                                     <div className="bg-slate-50/50 p-3 rounded-lg text-[10px] text-slate-600 leading-relaxed font-bold border border-slate-100 italic">
-                                        "{booking.deliverables?.message || "Null set input."}"
+                                        "{booking.deliverables?.message || "No message."}"
                                     </div>
                                     <div className="grid grid-cols-5 gap-2">
                                         {booking.deliverables?.files?.map((f, i) => (
@@ -162,7 +162,7 @@ const AdminCompletionReviews = () => {
                                         disabled={actionLoading}
                                         className="w-full py-2.5 bg-emerald-600 text-white rounded font-black text-[8px] uppercase tracking-widest hover:bg-slate-950 transition-all flex items-center justify-center gap-2 shadow-xl"
                                     >
-                                        <CheckCircle2 className="w-3.5 h-3.5" /> APPROVE WORK
+                                        <CheckCircle2 className="w-3.5 h-3.5" /> APPROVE
                                     </button>
                                     
                                     <div className="h-px bg-slate-200/50 mx-4"></div>
@@ -179,7 +179,7 @@ const AdminCompletionReviews = () => {
                                             disabled={actionLoading}
                                             className="w-full py-2.5 text-rose-600 bg-white border border-rose-100 rounded font-black text-[8px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm"
                                         >
-                                            <AlertCircle className="w-3.5 h-3.5" /> REJECT WORK
+                                            <AlertCircle className="w-3.5 h-3.5" /> REJECT
                                         </button>
                                     </div>
                                 </div>
